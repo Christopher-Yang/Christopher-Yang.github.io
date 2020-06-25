@@ -2,15 +2,15 @@
  *  Test *
  *********/
 
-import { PsychoJS } from 'psychojs/js/core/PsychoJS.js';
-import { Scheduler } from 'psychojs/js/util/Scheduler.js';
-import { Color } from 'psychojs/js/util/Color.js';
-import * as Clock from 'psychojs/js/util/Clock.js';
-import * as util from 'psychojs/js/util/Util.js';
-import { Mouse } from 'psychojs/js/core/Mouse.js';
-import { Polygon } from 'psychojs/js/visual/Polygon.js';
-import { TextStim } from 'psychojs/js/visual/TextStim.js';
-import { Keyboard } from 'psychojs/js/core/Keyboard.js';
+import { PsychoJS } from './psychojs/js/core/PsychoJS.js';
+import { Scheduler } from './psychojs/js/util/Scheduler.js';
+import { Color } from './psychojs/js/util/Color.js';
+import * as Clock from './psychojs/js/util/Clock.js';
+import * as util from './psychojs/js/util/Util.js';
+import { Mouse } from './psychojs/js/core/Mouse.js';
+import { Polygon } from './psychojs/js/visual/Polygon.js';
+import { TextStim } from './psychojs/js/visual/TextStim.js';
+import { Keyboard } from './psychojs/js/core/Keyboard.js';
 
 const heightPix = window.screen.availHeight;
 const widthPix = window.screen.availWidth;
