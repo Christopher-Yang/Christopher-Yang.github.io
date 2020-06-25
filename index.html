@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+
+<head>
+    <title> [PsychoPy]</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="user-scalable=no">
+    <style>
+      body {
+        width:80%;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      button {
+        display:block;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      
+      form {
+      width: 85%;
+      margin-left: 5%;
+      margin-right: auto;
+      }
+    </style>
+
+</head>
+
+<body>
+    <div id="root"></div>
+    <h1>Welcome to our experiment!</h1>
+    <h3>Before we get started, we need to get some information about your computer from you in order to make sure the experiment runs correctly. Please follow the steps below.</h3>
+
+    <form method="POST" action="/">
+      <p>1) Make sure your mouse acceleration/pointer precision is turned off. In Windows 10, you can access this option by going to Control Panel > Hardware and Sound > Mouse > Pointer Options > Uncheck "Enhance pointer precision"</p>&nbsp;
+      
+      <p>2) Enter your monitor's aspect ratio below. You can check your aspect ratio <a href = "https://whatismyresolution.com/" target = "new">here</a></p>
+
+      <div>
+	<label>Enter aspect ratio:</label>
+	<input type="text" name="aRatio" value="16:9" />
+      </div>&nbsp;
+
+      <p>3) Enter the size of your monitor in inches. The size is the physical distance between two diagonally opposite corners of your monitor (not including the surrounding bevels). If you know your laptop or desktop monitor's model number, you can look up the size. If you don'tknow the model number, you can use a measuring tape or another measuring device to measure the distance. If neither of these options are available to you, unfortunately, you will not be able to perform this experiment
+
+      <div>
+	<label>Enter screen size:</label>
+	<input type="text" name="size" value="15.6" />
+      </div>
+      <input type="submit" onclick = "window.location = 'experiment'" />
+    </form>
+</body>
+
+</html>
