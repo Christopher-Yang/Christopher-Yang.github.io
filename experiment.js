@@ -12,7 +12,14 @@ import { Polygon } from './psychojs/js/visual/Polygon.js';
 import { TextStim } from './psychojs/js/visual/TextStim.js';
 import { Keyboard } from './psychojs/js/core/Keyboard.js';
 
-// set parameters for sum of sines
+//------PARAMETERS TO CONTROL BLOCK STRUCTURE------//
+const nTrials = 8; // total number of trials
+const trialLength = 46; // how many seconds each trial lasts (set to desired time + 6 secs)
+const perturbStart = 5; // which trial the cursor sines start (must be >= 2)
+const mirrorStart = 5; // which trial to apply mirror reversal
+
+
+//------SET PARAMETERS FOR SUM OF SINES------//
 const freqs = [0.1, 0.15, 0.25, 0.35, 0.55, 0.65, 0.85, 0.95, 1.15, 1.45, 1.55, 1.85];
 const amplitudes = [0.023076923076923075, 0.023076923076923075, 0.023076923076923075, 0.023076923076923075, 0.023076923076923075, 0.023076923076923075, 0.01764705882352941, 0.015789473684210527, 0.013043478260869566, 0.010344827586206896, 0.009677419354838708, 0.008108108108108107];
 const phases = [-2.2973572091724623, 2.1829905511425176, 1.6573448103607546 ,-1.538946698747247, -0.02868219371247127, -0.3173569996006864, 0.9524867388833398, 1.8141023176943092, -2.551855477031973, -2.9634802056111047, 2.1096743676129526, -0.4224369710975715];
@@ -26,6 +33,8 @@ for (i=0; i<36; i=i+4) { // sines contains all of the sinusoid parameters broken
     sines[3].push(params[i+3]);
 }
 
+
+//------------PSYCHOJS SETUP-------------//
 // init psychoJS:
 const psychoJS = new PsychoJS({
     debug: true
@@ -54,10 +63,6 @@ const flowScheduler = new Scheduler(psychoJS);
 const dialogCancelScheduler = new Scheduler(psychoJS);
 psychoJS.scheduleCondition(function() { return (psychoJS.gui.dialogComponent.button === 'OK'); }, flowScheduler, dialogCancelScheduler);
 
-// set parameters for trials 
-const nTrials = 7;
-const perturbStart = 7; // must be >= 2
-
 // flowScheduler gets run if the participants presses OK
 flowScheduler.add(updateInfo); // add timeStamp
 flowScheduler.add(experimentInit);
@@ -66,6 +71,7 @@ for (i=1; i<=nTrials; i++) {
     flowScheduler.add(enterTarget());
     flowScheduler.add(tracking());
     flowScheduler.add(intertrialInterval());
+    //    if (i === perturbStart-1 || i === mirrorStart-1)
     if (i === perturbStart-1)
 	flowScheduler.add(message());
 }
@@ -81,6 +87,7 @@ psychoJS.start({
 });
 
 
+//------------DETAILS OF TRIAL STRUCTURE------------//
 var frameDur;
 function updateInfo() {
     expInfo['date'] = Clock.MonotonicClock.getDateStr();  // add a simple timestamp
@@ -115,8 +122,10 @@ let cursor;
 let target;
 let instructions;
 let instructions2;
-let trialCounter;
+let instructions3;
+let instructions4;
 let download;
+let trialCounter;
 let enter;
 function experimentInit() {
     // Make mouse cursor invisible
@@ -186,10 +195,34 @@ function experimentInit() {
 	color: new Color('white'),
     });
 
+    instructions3 = new TextStim({
+	win: psychoJS.window,
+	name: 'instructions3',
+	text: 'Click the target to begin the trial',
+	alignHoriz: 'center',
+	units: 'height',
+	pos: [0, -4*cm],
+	height: 0.7*cm,
+	wrapWidth: true,
+	color: new Color('white'),
+    });
+
+    instructions4 = new TextStim({
+	win: psychoJS.window,
+	name: 'instructions4',
+	text: 'The cursor will no longer move randomly. But now left-right cursor movement will be flipped (mouse left -> cursor left). Still do your best to keep the cursor in the target\n\nPress the enter key to continue.',
+	alignHoriz: 'center',
+	units: 'height',
+	pos: [0, 0],
+	height: 0.7*cm,
+	wrapWidth: true,
+	color: new Color('white'),
+    });
+
     download = new TextStim({
 	win: psychoJS.window,
 	name: 'download',
-	text: 'We will now download data from the experiment onto your computer\n\nTo initiate the download, press the enter key\n\nIf your browser asks you if you want to download multiple files, please click yes',
+	text: 'We will now download data from the experiment onto your computer.\n\nIf your browser asks you if you want to download multiple files, please click Yes.\n\nTo initiate the download, press the Enter key.',
 	alignHoriz: 'center',
 	units: 'height',
 	pos: [0, 0],
@@ -219,6 +252,7 @@ function experimentInit() {
 }
 
 
+let mirror = false;
 let mPos;
 let t;
 let frameN;
@@ -230,7 +264,10 @@ function trialRoutineBegin(trials) {
     return function () {
 	//------Prepare to start trial------
 	mPos = mouse.getPos();
-	cursor.setPos(mPos);
+	if (mirror)
+	    cursor.setPos([-mPos[0], mPos[1]]);
+	else
+	    cursor.setPos(mPos);
 	// cursor.setPos(mPos.map(pos => pos*0.7));
 	t = 0;
 	frameN = -1;
@@ -238,6 +275,8 @@ function trialRoutineBegin(trials) {
 	// draw objects
 	if (trial === 1)
 	    instructions.setAutoDraw(true);
+	else
+	    instructions3.setAutoDraw(true);
 
 	trialCounter.setText(`Trial ${trial}/${nTrials}`);
 	target.setAutoDraw(true);
@@ -252,15 +291,23 @@ function enterTarget(trials) {
     //------Wait for participant to click in the target to start trial------
     return function () {
 	mPos = mouse.getPos();
-	cursor.setPos(mPos);
-	// cursor.setPos(mPos.map(pos => pos*0.7));
 
+	if (mirror)
+	    cursor.setPos([-mPos[0], mPos[1]]);
+	else
+	    cursor.setPos(mPos);
+	// cursor.setPos(mPos.map(pos => pos*0.7));
 
 	if (target.contains(mouse) && mouse.getPressed()[0] == 1) {
 	    if (trial === 1)
 		instructions.setAutoDraw(false);
-	    else if (trial === perturbStart)
-		instructions2.setAutoDraw(false);
+	    else {
+		instructions3.setAutoDraw(false);
+		if (trial === perturbStart)
+		    instructions2.setAutoDraw(false);
+		// else if (trial === mirrorStart)
+		//     instructions4.setAutoDraw(false);
+	    }
 	    trialClock.reset();
 	    return Scheduler.Event.NEXT;
 	} else
@@ -269,7 +316,6 @@ function enterTarget(trials) {
 }
 
 
-const trialLength = 15; // by default, set to 66
 let cursorHistory = [];
 let allData = [];
 let data = [];
@@ -308,8 +354,10 @@ function tracking(trials) {
 	    cPosX = mPos[0];
 	    cPosY = mPos[1];
 	}
-	cursor.setPos([cPosX, cPosY]);
-
+	if (mirror)
+	    cursor.setPos([-cPosX, cPosY]);
+	else
+	    cursor.setPos([cPosX, cPosY]);
 
 	// set target position
 	for (i=0; i<3; i++) { // sinusoidally perturb the target
@@ -364,6 +412,10 @@ function intertrialInterval(trials) {
 	    if (trial === perturbStart) { // at trial "perturbStart," display new instructions to participant
 		perturbCursor = true;
 		instructions2.setAutoDraw(true);
+	    // } else if (trial === mirrorStart) {
+	    // 	mirror = true;
+	    // 	perturbCursor = false;
+	    // 	instructions4.setAutoDraw(true);
 	    } else if (trial > nTrials) // after all trials have finished, display download instructions
 		download.setAutoDraw(true);
 	    return Scheduler.Event.NEXT;
@@ -380,7 +432,10 @@ function message(trials) {
 	// download data files once the participant has pressed the RET key
 	let keys = enter.getKeys({keyList: ['return']});
 	if (Object.keys(keys).length === 1) {
-	    instructions2.setAutoDraw(false);
+	    if (trial === perturbStart)
+		instructions2.setAutoDraw(false);
+	    // else if (trial === mirrorStart)
+	    // 	instructions4.setAutoDraw(false);
 	    return Scheduler.Event.NEXT;
 	}
 	else
