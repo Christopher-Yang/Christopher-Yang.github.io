@@ -14,24 +14,9 @@ import { Keyboard } from './psychojs/js/core/Keyboard.js';
 
 //------PARAMETERS TO CONTROL BLOCK STRUCTURE------//
 const nTrials = 8; // total number of trials
-const trialLength = 40; // how many seconds each trial lasts (set to desired time + 6 secs)
+const trialLength = 46; // how many seconds each trial lasts (set to desired time + 6 secs)
 const perturbStart = 5; // which trial the cursor sines start (must be >= 2)
 const mirrorStart = 5; // which trial to apply mirror reversal
-
-
-//------SET PARAMETERS FOR SUM OF SINES------//
-const freqs = [0.1, 0.15, 0.25, 0.35, 0.55, 0.65, 0.85, 0.95, 1.15, 1.45, 1.55, 1.85];
-const amplitudes = [0.023076923076923075, 0.023076923076923075, 0.023076923076923075, 0.023076923076923075, 0.023076923076923075, 0.023076923076923075, 0.01764705882352941, 0.015789473684210527, 0.013043478260869566, 0.010344827586206896, 0.009677419354838708, 0.008108108108108107];
-const phases = [-2.2973572091724623, 2.1829905511425176, 1.6573448103607546 ,-1.538946698747247, -0.02868219371247127, -0.3173569996006864, 0.9524867388833398, 1.8141023176943092, -2.551855477031973, -2.9634802056111047, 2.1096743676129526, -0.4224369710975715];
-let params = freqs.concat(amplitudes,phases);
-let sines = [new Array, new Array, new Array, new Array];
-let i;
-for (i=0; i<36; i=i+4) { // sines contains all of the sinusoid parameters broken up into 4 different arrays
-    sines[0].push(params[i]);
-    sines[1].push(params[i+1]);
-    sines[2].push(params[i+2]);
-    sines[3].push(params[i+3]);
-}
 
 
 //------------PSYCHOJS SETUP-------------//
@@ -48,6 +33,7 @@ psychoJS.openWindow({
     units: 'height',
     waitBlanking: true
 });
+
 
 // store info about the experiment session:
 let expName = 'tracking';  // from the Builder filename that created this script
@@ -66,7 +52,7 @@ psychoJS.scheduleCondition(function() { return (psychoJS.gui.dialogComponent.but
 // flowScheduler gets run if the participants presses OK
 flowScheduler.add(updateInfo); // add timeStamp
 flowScheduler.add(experimentInit);
-for (i=1; i<=nTrials; i++) {
+for (let i=1; i<=nTrials; i++) {
     flowScheduler.add(trialRoutineBegin());
     flowScheduler.add(enterTarget());
     flowScheduler.add(tracking());
@@ -109,9 +95,13 @@ function updateInfo() {
 }
 
 
-let diagonal;
-let widthCm;
-let heightCm;
+let sines = [new Array, new Array, new Array, new Array];
+let tPosX;
+let tPosY;
+let cPosX;
+let cPosY;
+let time;
+let Nstep;
 let cm;
 let trial = 1;
 let perturbCursor = false;
@@ -135,15 +125,62 @@ function experimentInit() {
     trialClock = new Clock.Clock(); // keeps time during each trial
     itiTimer = new Clock.Clock(); // keeps time for intertrial interval
 
+    // Set parameters for sum of sines
+    const freqs = [0.1, 0.15, 0.25, 0.35, 0.55, 0.65, 0.85, 0.95, 1.15, 1.45, 1.55, 1.85];
+    const amplitudes = [0.023076923076923075, 0.023076923076923075, 0.023076923076923075, 0.023076923076923075, 0.023076923076923075, 0.023076923076923075, 0.01764705882352941, 0.015789473684210527, 0.013043478260869566, 0.010344827586206896, 0.009677419354838708, 0.008108108108108107];
+    const phases = [-2.2973572091724623, 2.1829905511425176, 1.6573448103607546 ,-1.538946698747247, -0.02868219371247127, -0.3173569996006864, 0.9524867388833398, 1.8141023176943092, -2.551855477031973, -2.9634802056111047, 2.1096743676129526, -0.4224369710975715];
+    let params = freqs.concat(amplitudes,phases);
+    for (let i=0; i<36; i=i+4) { // sines contains all of the sinusoid parameters broken up into 4 different arrays
+	sines[0].push(params[i]);
+	sines[1].push(params[i+1]);
+	sines[2].push(params[i+2]);
+	sines[3].push(params[i+3]);
+    }
+
     // Calculate units for centimeters
     let aRatioX = parseInt(expInfo['aspectRatio'].slice(0,expInfo['aspectRatio'].indexOf(':')));
     let aRatioY = parseInt(expInfo['aspectRatio'].slice(expInfo['aspectRatio'].indexOf(':')+1));
     let size = parseFloat(expInfo['size']);
-    diagonal = Math.sqrt(Math.pow(aRatioX,2) + Math.pow(aRatioY,2));
-    widthCm = 2.54 * size * aRatioX / diagonal; // physical width of monitor (cm)
-    heightCm = 2.54 * size * aRatioY / diagonal; // physical height of monitor (cm)
+    let diagonal = Math.sqrt(Math.pow(aRatioX,2) + Math.pow(aRatioY,2));
+    let widthCm = 2.54 * size * aRatioX / diagonal; // physical width of monitor (cm)
+    let heightCm = 2.54 * size * aRatioY / diagonal; // physical height of monitor (cm)
     cm = 1 / heightCm; // use this to convert height units to centimeters
 
+    let FR = psychoJS.window.getActualFrameRate();
+    time = [...Array(FR*trialLength).keys()].map(a => a/FR);
+    Nstep = time.length;
+    // let tPosX = scale * 100 * cm * cX.reduce((a, b) => a + b, 0) + mPos[0]; // scale the cursor position to centimeters
+    // let tPosY = scale * 100 * cm * cY.reduce((a, b) => a + b, 0) + mPos[1];
+
+    tPosX = new Array(Nstep);
+    tPosY = new Array(Nstep);
+    cPosX = new Array(Nstep);
+    cPosY = new Array(Nstep);
+    
+    for (let j=0; j<Nstep; j++) {
+	let scale;
+	let tX = new Array(3);
+	let tY = new Array(3);
+	let cX = new Array(3);
+	let cY = new Array(3);
+	
+	if (time[j] < 5) {
+	    scale = time[j]/5;
+	} else {
+	    scale = 1;
+	}
+	for (let i=0; i<3; i++) {
+	    cX[i] = sines[0][i+3] * Math.cos(2 * Math.PI * time[j] * sines[0][i] + sines[0][i+6]);
+	    cY[i] = sines[1][i+3] * Math.cos(2 * Math.PI * time[j] * sines[1][i] + sines[1][i+6]);
+	    tX[i] = sines[2][i+3] * Math.cos(2 * Math.PI * time[j] * sines[2][i] + sines[2][i+6]);
+	    tY[i] = sines[3][i+3] * Math.cos(2 * Math.PI * time[j] * sines[3][i] + sines[3][i+6]);
+	}
+	cPosX[j] = scale * 100 * cm * cX.reduce((a, b) => a + b);
+	cPosY[j] = scale * 100 * cm * cY.reduce((a, b) => a + b);
+	tPosX[j] = scale * 100 * cm * tX.reduce((a, b) => a + b);
+	tPosY[j] = scale * 100 * cm * tY.reduce((a, b) => a + b);
+    }
+    
     // Create display objects
     cursor = new Polygon ({
 	win: psychoJS.window,
@@ -255,7 +292,6 @@ function experimentInit() {
 let mirror = false;
 let mPos;
 let t;
-let frameN;
 let mouse = new Mouse({
     name: 'myMouse',
     win: psychoJS.window,
@@ -268,9 +304,7 @@ function trialRoutineBegin(trials) {
 	    cursor.setPos([-mPos[0], mPos[1]]);
 	else
 	    cursor.setPos(mPos);
-	// cursor.setPos(mPos.map(pos => pos*0.7));
 	t = 0;
-	frameN = -1;
 	
 	// draw objects
 	if (trial === 1)
@@ -288,7 +322,7 @@ function trialRoutineBegin(trials) {
 
 
 let timeCount;
-let data = new Array(4000);
+let data = makeArray(5, 4000);
 function enterTarget(trials) {
     //------Wait for participant to click in the target to start trial------
     return function () {
@@ -322,57 +356,29 @@ function enterTarget(trials) {
 let currentHit;
 let lastHit = false;
 let dataFilt;
-let cursorHistory = Array(nTrials);
-let allData = Array(nTrials);
-let scale;
-let tX = new Array(3);
-let tY = new Array(3);
-let cX = new Array(3);
-let cY = new Array(3);
-let cPosX;
-let cPosY;
+let cursorHistory = new Array(nTrials);
+let allData = new Array(nTrials);
 function tracking(trials) {
     return function () {
 	//------Sinusoidally perturb target (and cursor)------
 	
 	// get current time
 	t = trialClock.getTime();
-	frameN = frameN + 1;// number of completed frames (so 0 is the first frame)
-
-	// set scaling for amplitude
-	if (t < 5) {
-	    scale = t/5;
-	} else {
-	    scale = 1;
-	}
-
+	let index = Math.round((t/trialLength)*Nstep);
+	
 	// set cursor position
 	mPos = mouse.getPos();
-	if (perturbCursor) { // sinusoidally perturb the cursor if desired
-	    for (i=0; i<3; i++) {
-		cX[i] = sines[0][i+3] * Math.cos(2 * Math.PI * t * sines[0][i] + sines[0][i+6]);
-		cY[i] = sines[1][i+3] * Math.cos(2 * Math.PI * t * sines[1][i] + sines[1][i+6]);
-	    }
-	    cPosX = scale * 100 * cm * cX.reduce((a, b) => a + b, 0) + mPos[0]; // scale the cursor position to centimeters
-	    cPosY = scale * 100 * cm * cY.reduce((a, b) => a + b, 0) + mPos[1];
-	} else { // otherwise set cursor as mouse position
-	    cPosX = mPos[0];
-	    cPosY = mPos[1];
-	}
-	if (mirror)
-	    cursor.setPos([-cPosX, cPosY]);
+	if (perturbCursor && mirror)
+	    cursor.setPos([-(mPos[0]+cPosX[index]), mPos[1]+cPosY[index]]);
+	else if (perturbCursor && !mirror)
+	    cursor.setPos([mPos[0]+cPosX[index], mPos[1]+cPosY[index]]);
+	else if (!perturbCursor && mirror)
+	    cursor.setPos(-mPos[0], mPos[1]);
 	else
-	    cursor.setPos([cPosX, cPosY]);
+	    cursor.setPos(mPos);
 
 	// set target position
-	for (i=0; i<3; i++) { // sinusoidally perturb the target
-	    tX[i] = sines[2][i+3] * Math.cos(2 * Math.PI * t * sines[2][i] + sines[2][i+6]);
-	    tY[i] = sines[3][i+3] * Math.cos(2 * Math.PI * t * sines[3][i] + sines[3][i+6]);
-	}
-	let tPosX = scale * 100 * cm * tX.reduce((a, b) => a + b, 0); // scale the target position to centimeters
-	let tPosY = scale * 100 * cm * tY.reduce((a, b) => a + b, 0);
-	target.setPos([tPosX, tPosY]);
-
+	target.setPos([tPosX[index], tPosY[index]]);
 
 	// change target color if the cursor is inside the target
 	currentHit = target.contains(cursor);
@@ -404,12 +410,12 @@ function tracking(trials) {
 	    allData[trial-1] = dataFilt;
     	    cursorHistory[trial-1] = perturbCursor;
 	    trial++;
-	    data = Array(4000);
+	    data = makeArray(5, 4000);
 	    timeCount = 0;
-	    [sines[0], sines[1], sines[2], sines[3]] = [sines[3], sines[0], sines[1], sines[2]]; // exchange target and cursor sines
 	    target.setAutoDraw(false);
 	    cursor.setAutoDraw(false);
 	    target.setPos([0, 0]); // reset target position to center of screen
+	    target.setFillColor(new Color([0.2, 0.2, 0.2]));
 	    itiTimer.reset();
 	    
 	    return Scheduler.Event.NEXT;
@@ -423,6 +429,32 @@ function intertrialInterval(trials) {
     return function () {
 	//------Wait for a few seconds before moving to next part of experiment------
 	if (itiTimer.getTime() > iti) {
+	    [sines[0], sines[1], sines[2], sines[3]] = [sines[3], sines[0], sines[1], sines[2]]; // exchange target and cursor sines
+	    for (let j=0; j<Nstep; j++) {
+		let scale;
+		let tX = new Array(3);
+		let tY = new Array(3);
+		let cX = new Array(3);
+		let cY = new Array(3);
+		
+		if (time[j] < 5) {
+		    scale = time[j]/5;
+		} else {
+		    scale = 1;
+		}
+		for (let i =0; i<3; i++) {
+		    cX[i] = sines[0][i+3] * Math.cos(2 * Math.PI * time[j] * sines[0][i] + sines[0][i+6]);
+		    cY[i] = sines[1][i+3] * Math.cos(2 * Math.PI * time[j] * sines[1][i] + sines[1][i+6]);
+		    tX[i] = sines[2][i+3] * Math.cos(2 * Math.PI * time[j] * sines[2][i] + sines[2][i+6]);
+		    tY[i] = sines[3][i+3] * Math.cos(2 * Math.PI * time[j] * sines[3][i] + sines[3][i+6]);
+		}
+		cPosX[j] = scale * 100 * cm * cX.reduce((a, b) => a + b);
+		cPosY[j] = scale * 100 * cm * cY.reduce((a, b) => a + b);
+		tPosX[j] = scale * 100 * cm * tX.reduce((a, b) => a + b);
+		tPosY[j] = scale * 100 * cm * tY.reduce((a, b) => a + b);
+	    }
+
+	    
 	    if (trial === perturbStart) { // at trial "perturbStart," display new instructions to participant
 		perturbCursor = true;
 		instructions2.setAutoDraw(true);
@@ -490,4 +522,13 @@ function quitPsychoJS(message, isCompleted) {
     psychoJS.quit({message: message, isCompleted: isCompleted});
     
     return Scheduler.Event.QUIT;
+}
+
+
+function makeArray(d1, d2) {
+    let arr = [];
+    for(let i = 0; i < d2; i++) {
+	arr.push(new Array(d1));
+    }
+    return arr;
 }
