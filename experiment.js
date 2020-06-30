@@ -14,7 +14,7 @@ import { Keyboard } from './psychojs/js/core/Keyboard.js';
 
 //------PARAMETERS TO CONTROL BLOCK STRUCTURE------//
 const nTrials = 8; // total number of trials
-const trialLength = 46; // how many seconds each trial lasts (set to desired time + 6 secs)
+const trialLength = 40; // how many seconds each trial lasts (set to desired time + 6 secs)
 const perturbStart = 5; // which trial the cursor sines start (must be >= 2)
 const mirrorStart = 5; // which trial to apply mirror reversal
 
@@ -287,6 +287,8 @@ function trialRoutineBegin(trials) {
 }
 
 
+let timeCount;
+let data = new Array(4000);
 function enterTarget(trials) {
     //------Wait for participant to click in the target to start trial------
     return function () {
@@ -308,6 +310,7 @@ function enterTarget(trials) {
 		// else if (trial === mirrorStart)
 		//     instructions4.setAutoDraw(false);
 	    }
+	    timeCount = 0;
 	    trialClock.reset();
 	    return Scheduler.Event.NEXT;
 	} else
@@ -316,9 +319,11 @@ function enterTarget(trials) {
 }
 
 
-let cursorHistory = [];
-let allData = [];
-let data = [];
+let currentHit;
+let lastHit = false;
+let dataFilt;
+let cursorHistory = Array(nTrials);
+let allData = Array(nTrials);
 let scale;
 let tX = new Array(3);
 let tY = new Array(3);
@@ -368,14 +373,19 @@ function tracking(trials) {
 	let tPosY = scale * 100 * cm * tY.reduce((a, b) => a + b, 0);
 	target.setPos([tPosX, tPosY]);
 
+
 	// change target color if the cursor is inside the target
-	if (target.contains(cursor))
+	currentHit = target.contains(cursor);
+	if (currentHit && currentHit != lastHit) {
 	    target.setFillColor(new Color('darkorchid'));
-	else
+	    lastHit = currentHit;
+	} else if (!currentHit && currentHit != lastHit) { 
 	    target.setFillColor(new Color([0.2, 0.2, 0.2]));
+	    lastHit = currentHit;
+	}
 
 	// store data
-	data.push([t, cPosX, cPosY, tPosX, tPosY]);
+	data[timeCount] = [t, cPosX, cPosY, tPosX, tPosY];
 
 	// check for quit (typically the Esc key)
 	if (psychoJS.experiment.experimentEnded || psychoJS.eventManager.getKeys({keyList:['escape']}).length > 0) {
@@ -383,15 +393,19 @@ function tracking(trials) {
 	}
 	
 	// refresh screen for trialLength seconds
-	if (t <= trialLength) 
+	if (t <= trialLength) {
+	    timeCount++;
 	    return Scheduler.Event.FLIP_REPEAT;
+	}
 
 	// otherwise move to intertrial interval
 	else {
-	    allData.push(data);
-    	    cursorHistory.push(perturbCursor);
+	    dataFilt = data.filter(d => {return d != null;});
+	    allData[trial-1] = dataFilt;
+    	    cursorHistory[trial-1] = perturbCursor;
 	    trial++;
-	    data = [];
+	    data = Array(4000);
+	    timeCount = 0;
 	    [sines[0], sines[1], sines[2], sines[3]] = [sines[3], sines[0], sines[1], sines[2]]; // exchange target and cursor sines
 	    target.setAutoDraw(false);
 	    cursor.setAutoDraw(false);
