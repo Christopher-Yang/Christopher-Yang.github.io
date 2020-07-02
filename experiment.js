@@ -14,7 +14,7 @@ import { Keyboard } from './psychojs/js/core/Keyboard.js';
 
 //------PARAMETERS TO CONTROL BLOCK STRUCTURE------//
 const nTrials = 4; // total number of trials
-const trialLength = 46; // how many seconds each trial lasts (set to desired time + 6 secs)
+const trialLength = 4; // how many seconds each trial lasts (set to desired time + 6 secs)
 const perturbStart = 6; // which trial the cursor sines start (must be >= 2)
 const mirrorStart = 5; // which trial to apply mirror reversal
 
