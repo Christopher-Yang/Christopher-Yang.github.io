@@ -13,9 +13,9 @@ import { TextStim } from './psychojs/js/visual/TextStim.js';
 import { Keyboard } from './psychojs/js/core/Keyboard.js';
 
 //------PARAMETERS TO CONTROL BLOCK STRUCTURE------//
-const nTrials = 8; // total number of trials
+const nTrials = 4; // total number of trials
 const trialLength = 46; // how many seconds each trial lasts (set to desired time + 6 secs)
-const perturbStart = 5; // which trial the cursor sines start (must be >= 2)
+const perturbStart = 6; // which trial the cursor sines start (must be >= 2)
 const mirrorStart = 5; // which trial to apply mirror reversal
 
 
@@ -74,7 +74,8 @@ psychoJS.start({
 
 
 //------------DETAILS OF TRIAL STRUCTURE------------//
-var frameDur;
+let frameRate;
+let frameDur;
 function updateInfo() {
     expInfo['date'] = Clock.MonotonicClock.getDateStr();  // add a simple timestamp
     expInfo['expName'] = expName;
@@ -82,7 +83,8 @@ function updateInfo() {
     expInfo['OS'] = window.navigator.platform;
 
     // store frame rate of monitor if we can measure it successfully
-    expInfo['frameRate'] = psychoJS.window.getActualFrameRate();
+    frameRate = psychoJS.window.getActualFrameRate();
+    expInfo['frameRate'] = frameRate;
     if (typeof expInfo['frameRate'] !== 'undefined')
 	frameDur = 1.0 / Math.round(expInfo['frameRate']);
     else
@@ -146,11 +148,8 @@ function experimentInit() {
     let heightCm = 2.54 * size * aRatioY / diagonal; // physical height of monitor (cm)
     cm = 1 / heightCm; // use this to convert height units to centimeters
 
-    let FR = psychoJS.window.getActualFrameRate();
-    time = [...Array(FR*trialLength).keys()].map(a => a/FR);
+    time = [...Array(frameRate*(trialLength)+20).keys()].map(a => a/frameRate);
     Nstep = time.length;
-    // let tPosX = scale * 100 * cm * cX.reduce((a, b) => a + b, 0) + mPos[0]; // scale the cursor position to centimeters
-    // let tPosY = scale * 100 * cm * cY.reduce((a, b) => a + b, 0) + mPos[1];
 
     tPosX = new Array(Nstep);
     tPosY = new Array(Nstep);
@@ -320,7 +319,6 @@ function trialRoutineBegin(trials) {
     };
 }
 
-
 let timeCount;
 let data = makeArray(5, 4000);
 function enterTarget(trials) {
@@ -353,29 +351,47 @@ function enterTarget(trials) {
 }
 
 
+let a;
+let b;
 let currentHit;
 let lastHit = false;
 let dataFilt;
-let cursorHistory = new Array(nTrials);
-let allData = new Array(nTrials);
+// let cursorHistory = new Array(nTrials);
+// let allData = new Array(nTrials);
 function tracking(trials) {
     return function () {
 	//------Sinusoidally perturb target (and cursor)------
-	
+	// if (typeof a != 'undefined') {
+	//     console.timeEnd();
+	// }
 	// get current time
+	b = trialClock.getTime();
+	if (b-a > 0.05)
+	    console.log(b-a);
 	t = trialClock.getTime();
-	let index = Math.round((t/trialLength)*Nstep);
+	let index = Math.round((t/trialLength)*frameRate*trialLength);
 	
 	// set cursor position
 	mPos = mouse.getPos();
-	if (perturbCursor && mirror)
-	    cursor.setPos([-(mPos[0]+cPosX[index]), mPos[1]+cPosY[index]]);
-	else if (perturbCursor && !mirror)
-	    cursor.setPos([mPos[0]+cPosX[index], mPos[1]+cPosY[index]]);
-	else if (!perturbCursor && mirror)
-	    cursor.setPos(-mPos[0], mPos[1]);
-	else
-	    cursor.setPos(mPos);
+	let cX;
+	let cY;
+	if (perturbCursor && mirror) {
+	    cX = -(mPos[0]+cPosX[index]);
+	    cY = mPos[1]+cPosY[index];
+	}
+	else if (perturbCursor && !mirror) {
+	    cX = mPos[0]+cPosX[index];
+	    cY = mPos[1]+cPosY[index];
+	}
+	else if (!perturbCursor && mirror) {
+	    cX = -mPos[0];
+	    cY = mPos[1];
+	}
+	else {
+	    cX = mPos[0];
+	    cY = mPos[1];
+	}
+	cursor.setPos([cX, cY]);
 
 	// set target position
 	target.setPos([tPosX[index], tPosY[index]]);
@@ -390,27 +406,34 @@ function tracking(trials) {
 	    lastHit = currentHit;
 	}
 
+	a = trialClock.getTime();
 	// store data
-	data[timeCount] = [t, cPosX, cPosY, tPosX, tPosY];
+	data[0][timeCount] = t*cm;
+	data[1][timeCount] = cX*cm;
+	data[2][timeCount] = cY*cm;
+	data[3][timeCount] = tPosX[index]*cm;
+	data[4][timeCount] = tPosY[index]*cm;	
+	b = trialClock.getTime();
+	if (b-a > 0.05)
+	    console.log(b-a);
 
 	// check for quit (typically the Esc key)
 	if (psychoJS.experiment.experimentEnded || psychoJS.eventManager.getKeys({keyList:['escape']}).length > 0) {
 	    return quitPsychoJS('The [Escape] key was pressed. Goodbye!', false);
 	}
-	
+
 	// refresh screen for trialLength seconds
 	if (t <= trialLength) {
 	    timeCount++;
+	    a = trialClock.getTime();
 	    return Scheduler.Event.FLIP_REPEAT;
 	}
 
 	// otherwise move to intertrial interval
 	else {
-	    dataFilt = data.filter(d => {return d != null;});
-	    allData[trial-1] = dataFilt;
-    	    cursorHistory[trial-1] = perturbCursor;
-	    trial++;
-	    data = makeArray(5, 4000);
+	    // dataFilt = data.filter(d => {return d != null;});
+	    // allData[trial-1] = dataFilt;
+    	    // cursorHistory[trial-1] = perturbCursor;
 	    timeCount = 0;
 	    target.setAutoDraw(false);
 	    cursor.setAutoDraw(false);
@@ -429,6 +452,17 @@ function intertrialInterval(trials) {
     return function () {
 	//------Wait for a few seconds before moving to next part of experiment------
 	if (itiTimer.getTime() > iti) {
+	    psychoJS.experiment.addData('trial',trial);
+	    psychoJS.experiment.addData('cursor sines',perturbCursor);
+	    psychoJS.experiment.addData('time',data[0].filter(d => {return d != null;}));
+	    psychoJS.experiment.addData('cursorX',data[1].filter(d => {return d != null;}));
+	    psychoJS.experiment.addData('cursorY',data[2].filter(d => {return d != null;}));
+	    psychoJS.experiment.addData('targetX',data[3].filter(d => {return d != null;}));
+	    psychoJS.experiment.addData('targetY',data[4].filter(d => {return d != null;}));
+	    psychoJS.experiment.nextEntry();
+	    data = makeArray(5, 4000);
+	    trial++;
+	    
 	    [sines[0], sines[1], sines[2], sines[3]] = [sines[3], sines[0], sines[1], sines[2]]; // exchange target and cursor sines
 	    for (let j=0; j<Nstep; j++) {
 		let scale;
@@ -490,32 +524,36 @@ function message(trials) {
 }
 
 
-let j = 0;
 function quitPsychoJS(message, isCompleted) {
     //------Download data and end experiment------
 
     // make the mouse cursor visible again
     document.body.style.cursor='default';
     download.setAutoDraw(false);
-
     // loop for downloading data from each trial in separate csv file
-    for (const dat of allData) {
-	// convert data into a `csv` content
-	let csvContent = "data:text/csv;charset=utf-8,";
-	csvContent += `cursor_sines?,${cursorHistory[j]}\r\ntime,cursorX,cursorY,targetX,targetY\r\n`;
-	j++;
-	dat.forEach(function(rowArray) {
-	    let row = rowArray.join(",");
-	    csvContent += row + "\r\n";
-	});
+    // for (const dat of allData) {
+	// psychoJS.experiment.addData('trial',dat);
+	// // convert data into a `csv` content
+	// let csvContent = "data:text/csv;charset=utf-8,";
+	// csvContent += `cursor_sines?,${cursorHistory[j]}\r\ntime,cursorX,cursorY,targetX,targetY\r\n`;
+	// j++;
+	// dat.forEach(function(rowArray) {
+	//     let row = rowArray.join(",");
+	//     csvContent += row + "\r\n";
+	// });
 
-	var encodedUri = encodeURI(csvContent);
-	var link = document.createElement("a");
-	link.setAttribute("href", encodedUri);
-	link.style.display = 'none';
-	link.setAttribute("download", `Subj${expInfo.participant}_Day${expInfo.day}_Trial${j}_${expInfo.date}.csv`);
-	document.body.appendChild(link); // Required for FF
-	link.click();
+	// var encodedUri = encodeURI(csvContent);
+	// var link = document.createElement("a");
+	// link.setAttribute("href", encodedUri);
+	// link.style.display = 'none';
+	// link.setAttribute("download", `Subj${expInfo.participant}_Day${expInfo.day}_Trial${j}_${expInfo.date}.csv`);
+	// document.body.appendChild(link); // Required for FF
+	// link.click();
+    // }
+
+    // Check for and save orphaned data
+    if (psychoJS.experiment.isEntryEmpty()) {
+	psychoJS.experiment.nextEntry();
     }
     
     psychoJS.window.close();
@@ -527,8 +565,8 @@ function quitPsychoJS(message, isCompleted) {
 
 function makeArray(d1, d2) {
     let arr = [];
-    for(let i = 0; i < d2; i++) {
-	arr.push(new Array(d1));
+    for(let i = 0; i < d1; i++) {
+	arr.push(new Array(d2));
     }
     return arr;
-}
+}    
