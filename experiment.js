@@ -93,7 +93,7 @@ psychoJS.openWindow({
 
 // store info about the experiment session:
 let expName = 'tracking';  // from the Builder filename that created this script
-let expInfo = {'participant': '', 'day': '', 'aspectRatio': '16:9', 'size': '15.6'};
+let expInfo = {'participant': '', 'size': '15.6'};
 
 // schedule the experiment:
 psychoJS.schedule(psychoJS.gui.DlgFromDict({
@@ -117,7 +117,7 @@ for (let i=0; i<nTrials; i++) {
     flowScheduler.add(intertrialInterval());
 }
 flowScheduler.add(message());
-flowScheduler.add(quitPsychoJS, 'You are done with the experiment', true);
+flowScheduler.add(quitPsychoJS, 'You are done with the experiment.', true);
 
 // quit if user presses Cancel in dialog box:
 dialogCancelScheduler.add(quitPsychoJS, '', false);
@@ -160,6 +160,8 @@ let ampsX = new Array;
 let ampsY = new Array;
 let phasesX = new Array;
 let phasesY = new Array;
+let aRatioX;
+let aRatioY;
 let time;
 let Nstep;
 let height2cm;
@@ -194,7 +196,7 @@ function experimentInit() {
     a = a.map(a => a >= threshold ? threshold : a);
     const p = [-2.2973572091724623, 2.1829905511425176, 1.6573448103607546 ,-1.538946698747247, -0.02868219371247127, -0.3173569996006864, 0.9524867388833398, 1.8141023176943092, -2.551855477031973, -2.9634802056111047, 2.1096743676129526, -0.4224369710975715];
 
-    // Divide x and y sinusoid parameters into two subarrays (freqs[0] contains x and freqs[1] contains y)
+    // Divide x and y sinusoid parameters into different subarrays
     for (let i=0; i<12; i=i+2) {
 	freqsX.push(f[i]);
 	freqsY.push(f[i+1]);
@@ -204,9 +206,24 @@ function experimentInit() {
 	phasesY.push(p[i+1]);
     }
 
+    // Calculate screen aspect ratio
+    let resratio = (window.screen.width/window.screen.height);
+    if (1.32 < resratio && resratio < 1.34) {
+	aRatioX = 4;
+	aRatioY = 3;
+    } else if (1.77 < resratio && resratio < 1.79) {
+	aRatioX = 16;
+	aRatioY = 9;
+    } else if (1.59 < resratio && resratio < 1.61) {
+	aRatioX = 16;
+	aRatioY = 10;
+    } else {
+	aRatioX = resratio.toFixed(2);
+	aRatioY = 1;
+    }
+    expInfo['aspectRatio'] = aRatioX + ':' + aRatioY;
+    
     // Calculate units for centimeters
-    let aRatioX = parseInt(expInfo['aspectRatio'].slice(0,expInfo['aspectRatio'].indexOf(':')));
-    let aRatioY = parseInt(expInfo['aspectRatio'].slice(expInfo['aspectRatio'].indexOf(':')+1));
     let size = parseFloat(expInfo['size']);
     let diagonal = Math.sqrt(Math.pow(aRatioX,2) + Math.pow(aRatioY,2));
     let widthCm = 2.54 * size * aRatioX / diagonal; // physical width of monitor (cm)
@@ -214,7 +231,7 @@ function experimentInit() {
 
     height2cm = heightCm; // use this to convert height units to centimeters
     cm2height = 1 / heightCm; // use this to convert centimeters to height units
-    expInfo['cmConvert'] = height2cm;
+    expInfo['cmConvert'] = cm2height;
 
     time = [...Array(frameRate*(trialLength)+20).keys()].map(a => a/frameRate);
     Nstep = time.length;
@@ -306,17 +323,17 @@ function experimentInit() {
 	color: new Color('white'),
     });
     
-    download = new TextStim({
+     download = new TextStim({
 	win: psychoJS.window,
 	name: 'download',
-	text: 'We will now download data from the experiment onto your computer.\n\nIf your browser asks you if you want to download multiple files, please click Yes.\n\nTo initiate the download, press the Enter key.',
+	text: 'We will now download data from the experiment onto your computer. The download process may take up to a minute.\n\nIf your browser asks if you want to open or save the data, please click Save.\n\nTo initiate the download, press the Enter key.',
 	alignHoriz: 'center',
 	units: 'height',
 	pos: [0, 0],
 	height: 0.7*cm2height,
 	wrapWidth: true,
 	color: new Color('white'),
-    });
+     });
 
     trialCounter = new TextStim({
 	win: psychoJS.window,
@@ -496,17 +513,12 @@ function enterTarget(trials) {
 	    cursor.setPos([-mPos[0], mPos[1]]);
 	else
 	    cursor.setPos(mPos);
-	// cursor.setPos(mPos.map(pos => pos*0.7));
 
 	if (target.contains(mouse) && mouse.getPressed()[0] == 1) {
 	    if (trial === 1)
 		startInstructions.setAutoDraw(false);
 	    else {
 		repeatInstructions.setAutoDraw(false);
-		// if (trial === perturbStart)
-		//     cursorOnlyInstructions.setAutoDraw(false);
-		// else if (trial === mirrorStart)
-		//     mirrorInstructions.setAutoDraw(false);
 	    }
 	    trialClock.reset();
 
@@ -521,8 +533,6 @@ let b;
 let t;
 let currentHit;
 let lastHit = false;
-// let cursorHistory = new Array(nTrials);
-// let allData = new Array(nTrials);
 function tracking(trials) {
     return function () {
 	//------Sinusoidally perturb target (and cursor)------
@@ -591,9 +601,6 @@ function tracking(trials) {
 
 	// otherwise move to intertrial interval
 	else {
-	    // dataFilt = data.filter(d => {return d != null;});
-	    // allData[trial-1] = dataFilt;
-    	    // cursorHistory[trial-1] = perturbCursor;
 	    target.setAutoDraw(false);
 	    cursor.setAutoDraw(false);
 	    target.setPos([0, 0]); // reset target position to center of screen
@@ -657,15 +664,6 @@ function intertrialInterval(trials) {
 		download.setAutoDraw(true);
 	    }
 	    
-	    // if (trial === perturbStart) { // at trial "perturbStart," display new instructions to participant
-	    // 	perturbCursor = true;
-	    // 	cursorOnlyInstructions.setAutoDraw(true);
-	    // // } else if (trial === mirrorStart) {
-	    // // 	mirror = true;
-	    // // 	perturbCursor = false;
-	    // // 	mirrorInstructions.setAutoDraw(true);
-	    // } else if (trial > nTrials) // after all trials have finished, display download instructions
-	    // 	download.setAutoDraw(true);
 	    return Scheduler.Event.NEXT;
 	} else
 	    return Scheduler.Event.FLIP_REPEAT;
@@ -687,6 +685,10 @@ function message(trials) {
 
 	    case 5:
 		cursorTargetInstructions.setAutoDraw(false);
+		break;
+
+	    case nTrials+1:
+		download.setAutoDraw(false);
 	    }
 
 	    // if (trial === perturbStart)
@@ -707,26 +709,6 @@ function quitPsychoJS(message, isCompleted) {
     // make the mouse cursor visible again
     document.body.style.cursor='default';
     download.setAutoDraw(false);
-    // loop for downloading data from each trial in separate csv file
-    // for (const dat of allData) {
-	// psychoJS.experiment.addData('trial',dat);
-	// // convert data into a `csv` content
-	// let csvContent = "data:text/csv;charset=utf-8,";
-	// csvContent += `cursor_sines?,${cursorHistory[j]}\r\ntime,cursorX,cursorY,targetX,targetY\r\n`;
-	// j++;
-	// dat.forEach(function(rowArray) {
-	//     let row = rowArray.join(",");
-	//     csvContent += row + "\r\n";
-	// });
-
-	// var encodedUri = encodeURI(csvContent);
-	// var link = document.createElement("a");
-	// link.setAttribute("href", encodedUri);
-	// link.style.display = 'none';
-	// link.setAttribute("download", `Subj${expInfo.participant}_Day${expInfo.day}_Trial${j}_${expInfo.date}.csv`);
-	// document.body.appendChild(link); // Required for FF
-	// link.click();
-    // }
 
     // Check for and save orphaned data
     if (psychoJS.experiment.isEntryEmpty()) {
