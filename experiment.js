@@ -93,7 +93,7 @@ psychoJS.openWindow({
 
 // store info about the experiment session:
 let expName = 'tracking';  // from the Builder filename that created this script
-let expInfo = {'participant': '', 'size': '15.6'};
+let expInfo = {'participant': '', 'size': ''};
 
 // schedule the experiment:
 psychoJS.schedule(psychoJS.gui.DlgFromDict({
@@ -178,6 +178,7 @@ let repeatInstructions;
 let cursorTargetInstructions;
 let mirrorInstructions;
 let download;
+let screen_size;
 let trialCounter;
 let enter;
 function experimentInit() {
@@ -218,7 +219,7 @@ function experimentInit() {
 	aRatioX = 16;
 	aRatioY = 10;
     } else {
-	aRatioX = resratio.toFixed(2);
+	aRatioX = Math.round(resratio * 100) / 100;
 	aRatioY = 1;
     }
     expInfo['aspectRatio'] = aRatioX + ':' + aRatioY;
@@ -333,8 +334,21 @@ function experimentInit() {
 	height: 0.7*cm2height,
 	wrapWidth: true,
 	color: new Color('white'),
-     });
+    });
 
+    screen_size = new TextStim({
+	win: psychoJS.window,
+	name: 'trialCounter',
+	alignHoriz: 'center',
+	units: 'norm',
+	pos: [0, 0],
+	height: 0.075,
+	wrapWidth: true,
+	color: new Color('white'),
+	options: true
+    });
+    screen_size.setText('You did not provide your screen size. Please refresh the page and input it into the "size" field.');
+    
     trialCounter = new TextStim({
 	win: psychoJS.window,
 	name: 'trialCounter',
@@ -351,6 +365,9 @@ function experimentInit() {
     enter = new Keyboard({
 	psychoJS: psychoJS
     });
+    
+   if (expInfo['size'] == '')
+	screen_size.setAutoDraw(true);
 
     return Scheduler.Event.NEXT;
 }
