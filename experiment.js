@@ -28,19 +28,15 @@ import { Keyboard } from '../lib/core-2020.1.js';
 // }
 
 //------PARAMETERS TO CONTROL BLOCK STRUCTURE------//
-const trialLength = 46; // how many seconds each trial lasts (set to desired time + 6 secs)
-const perturbStart = 8; // which trial the cursor sines start (must be >= 2)
-const mirrorStart = 8; // which trial to apply mirror reversal
-
 // 1: Target sines only
 // 2: Cursor sines only
 // 3: Target + cursor sines, set 1
 // 4: Target + cursor sines, set 2
 const trialType = [1, 1, 2, 2, 3, 3, 4, 4];
 const nTrials = trialType.length; // total number of trials
+const trialLength = 2; // how many seconds each trial lasts (set to desired time + 6 secs)
 
 const messageType = trialType.map((a) => a == 4 ? 3 : a);
-// const messageStart = trialType.map((thisNumber, index, nextNumber) => index ? thisNumber - nextNumber[index-1] : 0);
 let messageStart = messageType.map((current, i, all) => (current != all[i-1]) ? 1 : 0);
 messageStart[0] = 0;
 
@@ -92,11 +88,12 @@ psychoJS.openWindow({
 
 
 // store info about the experiment session:
-let expName = 'tracking';  // from the Builder filename that created this script
+let expName = 'Tracking';  // from the Builder filename that created this script
 let expInfo = {'participant': '', 'size': ''};
 
 // schedule the experiment:
 psychoJS.schedule(psychoJS.gui.DlgFromDict({
+    text: "Welcome to the experiment. Press 'Ok' when you are ready to begin.",
     dictionary: expInfo,
     title: expName
 }));
@@ -108,12 +105,14 @@ psychoJS.scheduleCondition(function() { return (psychoJS.gui.dialogComponent.but
 // flowScheduler gets run if the participants presses OK
 flowScheduler.add(updateInfo); // add timeStamp
 flowScheduler.add(experimentInit);
+flowScheduler.add(tutorial);
 for (let i=0; i<nTrials; i++) {
     if (messageStart[i])
     	flowScheduler.add(message());
     flowScheduler.add(trialRoutineBegin());
     flowScheduler.add(enterTarget());
     flowScheduler.add(tracking());
+    flowScheduler.add(trialComplete());
     flowScheduler.add(intertrialInterval());
 }
 flowScheduler.add(message());
@@ -172,7 +171,9 @@ let itiTimer;
 let routineTimer;
 let cursor;
 let target;
+let fullScreen;
 let startInstructions;
+let goodJob;
 let cursorOnlyInstructions;
 let repeatInstructions;
 let cursorTargetInstructions;
@@ -180,7 +181,8 @@ let mirrorInstructions;
 let download;
 let screen_size;
 let trialCounter;
-let enter;
+let fullScreenReminder;
+let keyboard;
 function experimentInit() {
     // Make mouse cursor invisible
     document.body.style.cursor='none';
@@ -223,6 +225,9 @@ function experimentInit() {
 	aRatioY = 1;
     }
     expInfo['aspectRatio'] = aRatioX + ':' + aRatioY;
+
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
     
     // Calculate units for centimeters
     let size = parseFloat(expInfo['size']);
@@ -249,6 +254,7 @@ function experimentInit() {
 	edges: 32,
 	radius: 0.1*cm2height,
 	interpolate: true,
+	autoLog: false,
     });
 
     target = new Polygon ({
@@ -262,12 +268,25 @@ function experimentInit() {
 	edges: 64,
 	radius: 0.5*cm2height,
 	interpolate: true,
+	autoLog: false,
+    });
+
+    fullScreen = new TextStim({
+	win: psychoJS.window,
+	name: 'fullScreen',
+	text: 'This experiment must be performed in full screen. If the experiment window exits full screen during the experiment (by pressing "Esc"), press the "f" key on your keyboard to reenter full screen mode. Try exiting and entering full screen now.\n\nPress the "Enter" key when you are ready to continue.',
+	alignHoriz: 'center',
+	units: 'height',
+	pos: [0, 0],
+	height: 0.7*cm2height,
+	wrapWidth: true,
+	color: new Color('white'),
     });
 
     startInstructions = new TextStim({
 	win: psychoJS.window,
 	name: 'startInstructions',
-	text: 'The target (grey circle) will move randomly on the screen, and you must try to keep your cursor (white dot) inside the target for as long as you possibly can\n\nClick the target when you are ready to begin',
+	text: 'The target (grey circle) will move randomly on the screen for ~45 seconds, and you must try to keep your cursor (white dot) inside the target for as long as you possibly can.\n\nThis task is designed to be very difficult so just try your best.\n\nClick the target when you are ready to begin the first trial.',
 	alignHoriz: 'center',
 	units: 'height',
 	pos: [0, -4*cm2height],
@@ -276,10 +295,22 @@ function experimentInit() {
 	color: new Color('white'),
     });
 
+    goodJob = new TextStim({
+	win: psychoJS.window,
+	name: 'goodJob',
+	text: 'Trial complete, good job!',
+	alignHoriz: 'center',
+	units: 'height',
+	pos: [0, 0],
+	height: 0.7*cm2height,
+	wrapWidth: true,
+	color: new Color('white'),
+    });
+    
     repeatInstructions = new TextStim({
 	win: psychoJS.window,
 	name: 'repeatInstructions',
-	text: 'Click the target to begin the trial',
+	text: 'Click the target to begin the next trial.',
 	alignHoriz: 'center',
 	units: 'height',
 	pos: [0, -4*cm2height],
@@ -291,7 +322,7 @@ function experimentInit() {
     cursorOnlyInstructions = new TextStim({
 	win: psychoJS.window,
 	name: 'cursorOnlyInstructions',
-	text: 'When you start the next trial, the target will stay still but instead the cursor will move randomly. Still do your best to keep the cursor in the target.\n\nPress the enter key to continue.',
+	text: 'When you start the next trial, the target will stay still but instead the cursor will move randomly. Still do your best to keep the cursor in the target.\n\nPress the "Enter" key to continue.',
 	alignHoriz: 'center',
 	units: 'height',
 	pos: [0, 0],
@@ -303,7 +334,7 @@ function experimentInit() {
     cursorTargetInstructions = new TextStim({
 	win: psychoJS.window,
 	name: 'cursorTargetInstructions',
-	text: 'Now, both the cursor and the target will move randomly. Still try your best to keep the cursor inside the target.\n\nPress the enter key to continue.',
+	text: 'Now, both the cursor and the target will move randomly. Still try your best to keep the cursor inside the target.\n\nPress the "Enter" key to continue.',
 	alignHoriz: 'center',
 	units: 'height',
 	pos: [0, 0],
@@ -315,7 +346,7 @@ function experimentInit() {
     mirrorInstructions = new TextStim({
 	win: psychoJS.window,
 	name: 'mirrorInstructions',
-	text: 'The cursor will no longer move randomly. But now left-right cursor movement will be flipped (mouse left -> cursor left). Still do your best to keep the cursor in the target\n\nPress the enter key to continue.',
+	text: 'The cursor will no longer move randomly. But now left-right cursor movement will be flipped (mouse left -> cursor left). Still do your best to keep the cursor in the target\n\nPress the "Enter" key to continue.',
 	alignHoriz: 'center',
 	units: 'height',
 	pos: [0, 0],
@@ -327,7 +358,7 @@ function experimentInit() {
      download = new TextStim({
 	win: psychoJS.window,
 	name: 'download',
-	text: 'We will now download data from the experiment onto your computer. The download process may take up to a minute.\n\nIf your browser asks if you want to open or save the data, please click Save.\n\nTo initiate the download, press the Enter key.',
+	text: 'We will now download data from the experiment onto your computer. The download process may take up to a minute.\n\nIf your browser asks if you want to open or save the data, please click Save.\n\nTo initiate the download, press the "Enter" key.',
 	alignHoriz: 'center',
 	units: 'height',
 	pos: [0, 0],
@@ -338,7 +369,7 @@ function experimentInit() {
 
     screen_size = new TextStim({
 	win: psychoJS.window,
-	name: 'trialCounter',
+	name: 'screen_size',
 	alignHoriz: 'center',
 	units: 'norm',
 	pos: [0, 0],
@@ -352,6 +383,7 @@ function experimentInit() {
     trialCounter = new TextStim({
 	win: psychoJS.window,
 	name: 'trialCounter',
+	text: `Trial 1/${nTrials}`,
 	alignHoriz: 'center',
 	units: 'norm',
 	pos: [0.83, 0.85],
@@ -360,18 +392,47 @@ function experimentInit() {
 	color: new Color('white'),
 	options: true
     });
-    trialCounter.setAutoDraw(true);
+
+    fullScreenReminder = new TextStim({
+	win: psychoJS.window,
+	name: 'fullScreenReminder',
+	text: `f: full screen`,
+	alignHoriz: 'center',
+	units: 'norm',
+	pos: [-0.78, 0.85],
+	height: 0.075,
+	wrapWidth: true,
+	color: new Color('white'),
+	options: true
+    });
     
-    enter = new Keyboard({
+    keyboard = new Keyboard({
 	psychoJS: psychoJS
     });
     
-   if (expInfo['size'] == '')
+    if (expInfo['size'] == '')
 	screen_size.setAutoDraw(true);
 
+    fullScreen.setAutoDraw(true);
     return Scheduler.Event.NEXT;
 }
 
+
+function tutorial() {
+    let keys = keyboard.getKeys({keyList: ['f']});
+    if (Object.keys(keys).length === 1)
+	psychoJS.window.adjustScreenSize();
+    
+    keys = keyboard.getKeys({keyList: ['return']});
+    if (Object.keys(keys).length === 1) {
+	fullScreen.setAutoDraw(false);
+	trialCounter.setAutoDraw(true);
+	fullScreenReminder.setAutoDraw(true);
+	return Scheduler.Event.NEXT;
+    }
+
+    return Scheduler.Event.FLIP_REPEAT;
+}
 
 let tX_freq;
 let tY_freq;
@@ -397,6 +458,7 @@ let mPos;
 let mouse = new Mouse({
     name: 'myMouse',
     win: psychoJS.window,
+    autoLog: false
 });
 function trialRoutineBegin(trials) {
     return function () {
@@ -522,10 +584,15 @@ function trialRoutineBegin(trials) {
 }
 
 function enterTarget(trials) {
-    //------Wait for participant to click in the target to start trial------
     return function () {
-	mPos = mouse.getPos();
+	//------Wait for participant to click in the target to start trial------
+	// allow participant to reenter fullscreen by pressing 'f'
+	let keys = keyboard.getKeys({keyList: ['f']});
+	if (Object.keys(keys).length === 1)
+	    psychoJS.window.adjustScreenSize();
 
+	mPos = mouse.getPos();
+	
 	if (mirror)
 	    cursor.setPos([-mPos[0], mPos[1]]);
 	else
@@ -560,6 +627,16 @@ function tracking(trials) {
 	// b = trialClock.getTime();
 	// if (b-a > 0.05)
 	//     console.log(b-a);
+
+	// allow participant to reenter fullscreen by pressing 'f'
+	let keys = keyboard.getKeys({keyList: ['f']});
+	if (Object.keys(keys).length === 1)
+	    psychoJS.window.adjustScreenSize();
+	
+	// make cursor invisible again if it has reappeared
+	if (document.body.style.cursor != 'none')
+	    document.body.style.cursor='none';
+	
 	t = trialClock.getTime();
 	let index = Math.round(t*frameRate);
 	
@@ -629,11 +706,40 @@ function tracking(trials) {
     };
 }
 
+function trialComplete(trials) {
+    return function () {
+	//------Tell the participant good job------
 
-const iti = 1.5;
+	// allow participant to reenter fullscreen by pressing 'f'
+	let keys = keyboard.getKeys({keyList: ['f']});
+	if (Object.keys(keys).length === 1)
+	    psychoJS.window.adjustScreenSize();
+
+	if (itiTimer.getTime() < 1.5) {
+	    if (itiTimer.getTime() > 0.5 && goodJob.autoDraw === false) {
+		goodJob.setAutoDraw(true);
+	    }
+	    return Scheduler.Event.FLIP_REPEAT;
+	}
+	else {
+	    goodJob.setAutoDraw(false);
+	    itiTimer.reset();
+	    return Scheduler.Event.NEXT;
+	}
+    };
+}
+
+
+const iti = 1;
 function intertrialInterval(trials) {
     return function () {
 	//------Wait for a few seconds before moving to next part of experiment------
+
+	// allow participant to reenter fullscreen by pressing 'f'
+	let keys = keyboard.getKeys({keyList: ['f']});
+	if (Object.keys(keys).length === 1)
+	    psychoJS.window.adjustScreenSize();
+
 	if (itiTimer.getTime() > iti) {
 	    // calculate idx, the last index in data which is not null
 	    let tFilt = data[0].filter(d => {return d != null;});
@@ -692,8 +798,13 @@ function message(trials) {
     return function () {
 	//------Display messages to the participant------
 
+	// allow participant to reenter fullscreen by pressing 'f'
+	let keys = keyboard.getKeys({keyList: ['f']});
+	if (Object.keys(keys).length === 1)
+	    psychoJS.window.adjustScreenSize();
+	
 	// download data files once the participant has pressed the RET key
-	let keys = enter.getKeys({keyList: ['return']});
+	keys = keyboard.getKeys({keyList: ['return']});
 	if (Object.keys(keys).length === 1) {
 	    switch (trial) {
 	    case 3:
