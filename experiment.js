@@ -34,7 +34,7 @@ import { Keyboard } from '../lib/core-2020.1.js';
 // 4: Target + cursor sines, set 2
 const trialType = [1, 1, 2, 2, 3, 3, 4, 4];
 const nTrials = trialType.length; // total number of trials
-const trialLength = 2; // how many seconds each trial lasts (set to desired time + 6 secs)
+const trialLength = 46; // how many seconds each trial lasts (set to desired time + 6 secs)
 
 const messageType = trialType.map((a) => a == 4 ? 3 : a);
 let messageStart = messageType.map((current, i, all) => (current != all[i-1]) ? 1 : 0);
