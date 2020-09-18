@@ -322,7 +322,7 @@ function experimentInit() {
     cursorOnlyInstructions = new TextStim({
 	win: psychoJS.window,
 	name: 'cursorOnlyInstructions',
-	text: 'When you start the next trial, the target will stay still but instead the cursor will move randomly. Still do your best to keep the cursor in the target.\n\nPress the "Enter" key to continue.',
+	text: 'When you start the next trial, the target will remain still. Instead, the cursor will move randomly. Try your best to counteract the random cursor movement and keep the cursor in the target.\n\nPress the "Enter" key to continue.',
 	alignHoriz: 'center',
 	units: 'height',
 	pos: [0, 0],
