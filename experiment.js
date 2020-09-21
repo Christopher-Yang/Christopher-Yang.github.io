@@ -463,8 +463,8 @@ let mouse = new Mouse({
 function trialRoutineBegin(trials) {
     return function () {
 	//------Prepare to start trial------
-	data = makeArray(5, Nstep+frameRate*2);
-	extraData = makeArray(5, frameRate*2);
+	data = makeArray(7, Nstep+frameRate*2);
+	extraData = makeArray(7, frameRate*2);
 	extraCount = 0;
 
 	mPos = mouse.getPos();
@@ -673,12 +673,16 @@ function tracking(trials) {
 	    data[2][index] = Math.round(cY * height2cm * 100000) / 100000;
 	    data[3][index] = Math.round(tPosX[index] * height2cm * 100000) / 100000;
 	    data[4][index] = Math.round(tPosY[index] * height2cm * 100000) / 100000;
+	    data[5][index] = Math.round(cPosX[index] * height2cm * 100000) / 100000;
+	    data[6][index] = Math.round(cPosY[index] * height2cm * 100000) / 100000;
 	} else {
 	    extraData[0][extraCount] = Math.round(t * 100000) / 100000;
 	    extraData[1][extraCount] = Math.round(cX * height2cm * 100000) / 100000;
 	    extraData[2][extraCount] = Math.round(cY * height2cm * 100000) / 100000;
 	    extraData[3][extraCount] = Math.round(tPosX[index] * height2cm * 100000) / 100000;
 	    extraData[4][extraCount] = Math.round(tPosY[index] * height2cm * 100000) / 100000;
+	    extraData[5][extraCount] = Math.round(cPosX[index] * height2cm * 100000) / 100000;
+	    extraData[6][extraCount] = Math.round(cPosY[index] * height2cm * 100000) / 100000;
 	    extraCount++;
 	}
 	
@@ -741,10 +745,14 @@ function intertrialInterval(trials) {
 	    psychoJS.window.adjustScreenSize();
 
 	if (itiTimer.getTime() > iti) {
-	    // calculate idx, the last index in data which is not null
-	    let tFilt = data[0].filter(d => {return d != null;});
-	    let num = tFilt[tFilt.length - 1];
-	    let idx = data[0].lastIndexOf(num);
+	    // calculate idx and idx2, the last indices in data and extraData which are not null
+	    let idx = data[0].length;
+	    while (idx-- && !data[0][idx]);
+
+	    let idx2 = extraData[0].length;
+	    while (idx2-- && !extraData[0][idx2]);
+
+	    console.log(idx);
 	    
 	    psychoJS.experiment.addData('trial',trial);
 	    psychoJS.experiment.addData('trialType',trialType[trial-1]);
@@ -753,11 +761,15 @@ function intertrialInterval(trials) {
 	    psychoJS.experiment.addData('cursorY',data[2].slice(0,idx+1));
 	    psychoJS.experiment.addData('targetX',data[3].slice(0,idx+1));
 	    psychoJS.experiment.addData('targetY',data[4].slice(0,idx+1));
-	    psychoJS.experiment.addData('extraTime',extraData[0]);
-	    psychoJS.experiment.addData('extraCursorX',extraData[1]);
-	    psychoJS.experiment.addData('extraCursorY',extraData[2]);
-	    psychoJS.experiment.addData('extraTargetX',extraData[3]);
-	    psychoJS.experiment.addData('extraTargetY',extraData[4]);
+	    psychoJS.experiment.addData('cursorX_input',data[5].slice(0,idx+1));
+	    psychoJS.experiment.addData('cursorY_input',data[6].slice(0,idx+1));
+	    psychoJS.experiment.addData('extraTime',extraData[0].slice(0,idx2+1));
+	    psychoJS.experiment.addData('extraCursorX',extraData[1].slice(0,idx2+1));
+	    psychoJS.experiment.addData('extraCursorY',extraData[2].slice(0,idx2+1));
+	    psychoJS.experiment.addData('extraTargetX',extraData[3].slice(0,idx2+1));
+	    psychoJS.experiment.addData('extraTargetY',extraData[4].slice(0,idx2+1));
+	    psychoJS.experiment.addData('extraCursorX_input',extraData[5].slice(0,idx2+1));
+	    psychoJS.experiment.addData('extraCursorY_input',extraData[6].slice(0,idx2+1));
 	    psychoJS.experiment.addData('tX_freq',tX_freq);
 	    psychoJS.experiment.addData('tY_freq',tY_freq);
 	    psychoJS.experiment.addData('tX_amp',tX_amp);
@@ -771,7 +783,6 @@ function intertrialInterval(trials) {
 	    psychoJS.experiment.addData('cX_phase',cX_phase);
 	    psychoJS.experiment.addData('cY_phase',cY_phase);
 	    psychoJS.experiment.nextEntry();
-	    data = makeArray(5, Nstep+100);
 	    trial++;
 
 	    switch (trial) {
