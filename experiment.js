@@ -51,10 +51,16 @@ const dialogCancelScheduler = new Scheduler(psychoJS);
 psychoJS.scheduleCondition(function() { return (psychoJS.gui.dialogComponent.button === 'OK'); }, flowScheduler, dialogCancelScheduler);
 
 // flowScheduler gets run if the participants presses OK
-// argument to functions are as follows
-// 0: tutorial blocks
-// 1: regular blocks
+// argument to tracking() is as follows:
+// 0: tutorial block
+// 1: regular block
 // 2: last block to download data
+//
+// argument to p2p() is as follows:
+// 0: tutorial block
+// 1: baseline block that initiates mirror reversal
+// 2: p2p block that transitions to another p2p block
+// 3: p2p block that transitions to tracking
 flowScheduler.add(updateInfo);
 flowScheduler.add(experimentInit);
 flowScheduler.add(fullscreenTutorial);
@@ -66,19 +72,19 @@ flowScheduler.add(tracking(1));
 flowScheduler.add(p2p(1));
 flowScheduler.add(tracking(1));
 flowScheduler.add(p2p(2));
-flowScheduler.add(p2p(3));
-flowScheduler.add(tracking(1));
 flowScheduler.add(p2p(2));
 flowScheduler.add(p2p(3));
 flowScheduler.add(tracking(1));
 flowScheduler.add(p2p(2));
+flowScheduler.add(p2p(2));
 flowScheduler.add(p2p(3));
 flowScheduler.add(tracking(1));
+flowScheduler.add(p2p(2));
 flowScheduler.add(p2p(2));
 flowScheduler.add(p2p(3));
 flowScheduler.add(tracking(2));
 flowScheduler.add(wait);
-flowScheduler.add(quitPsychoJS, 'Thank you for your patience, you are now done with the experiment.', true);
+flowScheduler.add(quitPsychoJS, 'Thank you for your patience, the data has finished downloading. You may now close the experiment.', true);
 
 // quit if user presses Cancel in dialog box:
 dialogCancelScheduler.add(quitPsychoJS, '', false);
@@ -358,7 +364,7 @@ function fullscreenTutorial() {
 	keys = keyboard.getKeys({keyList: ['return']});
 	if (Object.keys(keys).length === 1) {
 	    pressEnter.setAutoDraw(false);
-	    centerText.setText('You will be performing two tasks today: 1) a tracking task, and 2) a point-to-point reaching task. Before the real experiment starts, we will let you try both tasks right now.\n\nWe will start by trying three different versions of the tracking task.');
+	    centerText.setText('You will be performing two tasks today: 1) a tracking task, and 2) a point-to-point reaching task. Before the real experiment starts, we will let you try both tasks right now.\n\nWe will start by trying the tracking task.');
 	    fullScreenReminder.setAutoDraw(true);
 	    displayTimer.reset();
 	    return Scheduler.Event.NEXT;
@@ -468,9 +474,9 @@ function tracking(blockType) {
 	    // 3: Target + cursor sines, set 1
 	    // 4: Target + cursor sines, set 2
 	    if (blockType)
-		trialType = [1, 2, 3, 4];
+		trialType = [1, 2, 1, 2, 3, 4, 3, 4];
 	    else
-		trialType = [1, 2, 3];
+		trialType = [1, 2];
 	    nTrials = trialType.length;
 	    trialNumber = 1;
 
@@ -518,6 +524,9 @@ function tracking(blockType) {
 
 	    // reset target position to center of screen
 	    target.setPos([0, 0]);
+
+	    // set cursor position
+	    cursor.setPos([cX, cY]);
 	    
 	    // preallocate cursor sum of sinusoids
 	    tPosX = new Array(Nstep);
@@ -527,7 +536,71 @@ function tracking(blockType) {
 
 	    // set sinusoid parameters based on trial type
 	    switch(trialType[trialNumber-1]) {
-	    case 1: // target sinusoids only
+	    case 1: // target and cursor sinusoids (set 1)
+		tX_freq = freqsX.filter((a, index) => index%2 == 0);
+		tY_freq = freqsX.filter((a, index) => index%2 == 1);
+		tX_amp = ampsX.filter((a, index) => index%2 == 0);
+		tY_amp = ampsX.filter((a, index) => index%2 == 1);
+		tX_phase = phasesX.filter((a, index) => index%2 == 0);
+		tY_phase = phasesX.filter((a, index) => index%2 == 1);
+
+		cX_freq = freqsY.filter((a, index) => index%2 == 0);
+		cY_freq = freqsY.filter((a, index) => index%2 == 1);
+		cX_amp = ampsY.filter((a, index) => index%2 == 0);
+		cY_amp = ampsY.filter((a, index) => index%2 == 1);
+		cX_phase = phasesY.filter((a, index) => index%2 == 0);
+		cY_phase = phasesY.filter((a, index) => index%2 == 1);
+		break;
+		
+	    case 2: // target and cursor sinusoids (set 2)
+		tX_freq = freqsY.filter((a, index) => index%2 == 0);
+		tY_freq = freqsY.filter((a, index) => index%2 == 1);
+		tX_amp = ampsY.filter((a, index) => index%2 == 0);
+		tY_amp = ampsY.filter((a, index) => index%2 == 1);
+		tX_phase = phasesY.filter((a, index) => index%2 == 0);
+		tY_phase = phasesY.filter((a, index) => index%2 == 1);
+
+		cX_freq = freqsX.filter((a, index) => index%2 == 0);
+		cY_freq = freqsX.filter((a, index) => index%2 == 1);
+		cX_amp = ampsX.filter((a, index) => index%2 == 0);
+		cY_amp = ampsX.filter((a, index) => index%2 == 1);
+		cX_phase = phasesX.filter((a, index) => index%2 == 0);
+		cY_phase = phasesX.filter((a, index) => index%2 == 1);
+		break;
+
+	    case 3: // target and cursor sinusoids (set 1)
+		tX_freq = freqsX.filter((a, index) => index%2 == 1);
+		tY_freq = freqsX.filter((a, index) => index%2 == 0);
+		tX_amp = ampsX.filter((a, index) => index%2 == 1);
+		tY_amp = ampsX.filter((a, index) => index%2 == 0);
+		tX_phase = phasesX.filter((a, index) => index%2 == 0);
+		tY_phase = phasesX.filter((a, index) => index%2 == 1);
+
+		cX_freq = freqsY.filter((a, index) => index%2 == 1);
+		cY_freq = freqsY.filter((a, index) => index%2 == 0);
+		cX_amp = ampsY.filter((a, index) => index%2 == 1);
+		cY_amp = ampsY.filter((a, index) => index%2 == 0);
+		cX_phase = phasesY.filter((a, index) => index%2 == 0);
+		cY_phase = phasesY.filter((a, index) => index%2 == 1);
+		break;
+		
+	    case 4: // target and cursor sinusoids (set 2)
+		tX_freq = freqsY.filter((a, index) => index%2 == 1);
+		tY_freq = freqsY.filter((a, index) => index%2 == 0);
+		tX_amp = ampsY.filter((a, index) => index%2 == 1);
+		tY_amp = ampsY.filter((a, index) => index%2 == 0);
+		tX_phase = phasesY.filter((a, index) => index%2 == 0);
+		tY_phase = phasesY.filter((a, index) => index%2 == 1);
+
+		cX_freq = freqsX.filter((a, index) => index%2 == 1);
+		cY_freq = freqsX.filter((a, index) => index%2 == 0);
+		cX_amp = ampsX.filter((a, index) => index%2 == 1);
+		cY_amp = ampsX.filter((a, index) => index%2 == 0);
+		cX_phase = phasesX.filter((a, index) => index%2 == 0);
+		cY_phase = phasesX.filter((a, index) => index%2 == 1);
+		break;
+
+	    case 5: // target sinusoids only
 		tX_freq = freqsX;
 		tY_freq = freqsY;
 		tX_amp = ampsX;
@@ -543,7 +616,7 @@ function tracking(blockType) {
 		cY_phase = new Array(6).fill(0);
 		break;
 
-	    case 2: // cursor sinusoids only
+	    case 6: // cursor sinusoids only
 		tX_freq = new Array(6).fill(0);
 		tY_freq = new Array(6).fill(0);
 		tX_amp = new Array(6).fill(0);
@@ -557,38 +630,6 @@ function tracking(blockType) {
 		cY_amp = ampsY;
 		cX_phase = phasesX;
 		cY_phase = phasesY;
-		break;
-		
-	    case 3: // target and cursor sinusoids (set 1)
-		tX_freq = freqsX.filter((a, index) => index%2 == 0);
-		tY_freq = freqsY.filter((a, index) => index%2 == 0);
-		tX_amp = ampsX.filter((a, index) => index%2 == 0);
-		tY_amp = ampsY.filter((a, index) => index%2 == 0);
-		tX_phase = phasesX.filter((a, index) => index%2 == 0);
-		tY_phase = phasesY.filter((a, index) => index%2 == 0);
-
-		cX_freq = freqsX.filter((a, index) => index%2 == 1);
-		cY_freq = freqsY.filter((a, index) => index%2 == 1);
-		cX_amp = ampsX.filter((a, index) => index%2 == 1);
-		cY_amp = ampsY.filter((a, index) => index%2 == 1);
-		cX_phase = phasesX.filter((a, index) => index%2 == 1);
-		cY_phase = phasesY.filter((a, index) => index%2 == 1);
-		break;
-		
-	    case 4: // target and cursor sinusoids (set 2)
-		tX_freq = freqsX.filter((a, index) => index%2 == 1);
-		tY_freq = freqsY.filter((a, index) => index%2 == 1);
-		tX_amp = ampsX.filter((a, index) => index%2 == 1);
-		tY_amp = ampsY.filter((a, index) => index%2 == 1);
-		tX_phase = phasesX.filter((a, index) => index%2 == 1);
-		tY_phase = phasesY.filter((a, index) => index%2 == 1);
-
-		cX_freq = freqsX.filter((a, index) => index%2 == 0);
-		cY_freq = freqsY.filter((a, index) => index%2 == 0);
-		cX_amp = ampsX.filter((a, index) => index%2 == 0);
-		cY_amp = ampsY.filter((a, index) => index%2 == 0);
-		cX_phase = phasesX.filter((a, index) => index%2 == 0);
-		cY_phase = phasesY.filter((a, index) => index%2 == 0);
 	    }
 
 	    // loop through all time points to build 2D sum-of-sines
@@ -618,34 +659,41 @@ function tracking(blockType) {
 	    waitDisplay = 0;
 	    // draw objects
 	    if (blockType) {
-		if (trialNumber == 1) 
-		    instructions.setText('Version 1: Random target movement.');
-		else if (trialNumber == 2)
-		    instructions.setText('Version 2: Random cursor movement.');
-		else
-		    instructions.setText('Version 3: Random target and cursor movement.');
-		
+		// if (trialNumber == 1) 
+		//     instructions.setText('Version 1: Random target movement.');
+		// else if (trialNumber == 2)
+		//     instructions.setText('Version 2: Random cursor movement.');
+		// else
+		//     instructions.setText('Version 3: Random target and cursor movement.');
+
+		instructions.setText('Click the target to begin the trial');
 		instructions.setAutoDraw(true);
 		waitDisplay = 2;
 	    } else {
-	      	switch (trialNumber) {
-		case 1:
-		    instructions.setText('Version 1: The target (grey circle) will move randomly on the screen for ~45 seconds, and you must try to keep your cursor (white dot) inside the target for as long as you possibly can.\n\nThis task is designed to be very difficult so just try your best.\n\nClick the target to begin the first trial.');
-		    break;
+	      	// switch (trialNumber) {
+		// case 1:
+		//     instructions.setText('Version 1: The target (grey circle) will move randomly on the screen for ~45 seconds, and you must try to keep your cursor (white dot) inside the target for as long as you possibly can.\n\nThis task is designed to be very difficult so just try your best.\n\nClick the target to begin the first trial.');
+		//     break;
 
-		case 2:
-		    instructions.setText('Version 2: The target will remain still but your cursor will be moved around randomly. Try your best to counteract the random cursor movement and keep the cursor in the stationary target.\n\nClick the target to begin the next trial.');
-		    break;
+		// case 2:
+		//     instructions.setText('Version 2: The target will remain still but your cursor will be moved around randomly. Try your best to counteract the random cursor movement and keep the cursor in the stationary target.\n\nClick the target to begin the next trial.');
+		//     break;
 
-		case 3:
-		    instructions.setText('Version 3: Both the cursor and the target will move randomly. Still try your best to keep the cursor inside the target.\n\nClick the target to begin the next trial.');
-		}
+		// case 3:
+		//     instructions.setText('Version 3: Both the cursor and the target will move randomly. Still try your best to keep the cursor inside the target.\n\nClick the target to begin the next trial.');
+		// }
+		if (trialNumber == 1)
+		    instructions.setText('In the tracking task, you will use a cursor (white dot) to track a moving target (grey circle) for ~45 seconds. During the trial, both the target and cursor will move randomly. Try your best to counteract the random cursor movement and keep your cursor inside the target for as long as possible.\n\nThis task is designed to be very difficult so just try your best. Click the target to try out the task.');
+		else
+		    instructions.setText('Try the tracking task one more time. Click the target to begin the trial.');
 		instructions.setAutoDraw(true);
 	    }
 
 	    trialCounter.setText(`Trial ${trialNumber}/${nTrials}`);
+	    target.setAutoDraw(true);
+	    cursor.setAutoDraw(true);
 	    state = 3;
-	    displayTimer.reset();
+	    // displayTimer.reset();
 	    return Scheduler.Event.FLIP_REPEAT;
 	    break;
 
@@ -653,11 +701,11 @@ function tracking(blockType) {
 	case 3:
 	    cursor.setPos([cX, cY]);
 	    	    
-	    if (displayTimer.getTime() > waitDisplay) {
-		if (target.autoDraw == false) {
-		    target.setAutoDraw(true);
-		    cursor.setAutoDraw(true);
-		}
+	    // if (displayTimer.getTime() > waitDisplay) {
+	    // 	if (target.autoDraw == false) {
+	    // 	    target.setAutoDraw(true);
+	    // 	    cursor.setAutoDraw(true);
+	    // 	}
 	    
 	    if (target.contains(cursor) && mouse.getPressed()[0] == 1) {
 		if (instructions.autoDraw == true)
@@ -675,7 +723,7 @@ function tracking(blockType) {
 		data[8][0] = Math.round(cPosY[0] * height2cm * 100000) / 100000;
 
 		state = 4;
-	    }
+	    // }
 	    }	    
 	    return Scheduler.Event.FLIP_REPEAT;
 	    break;
@@ -780,6 +828,7 @@ function tracking(blockType) {
 		    psychoJS.experiment.addData('task','tracking (tutorial)');
 		psychoJS.experiment.addData('block',blockTracking);
 		psychoJS.experiment.addData('trialType',trialType[trialNumber-1]);
+		psychoJS.experiment.addData('mirror',mirror);
 		psychoJS.experiment.addData('time',data[0].slice(0,idx+1));
 		psychoJS.experiment.addData('cursorX',data[1].slice(0,idx+1));
 		psychoJS.experiment.addData('cursorY',data[2].slice(0,idx+1));
@@ -817,9 +866,9 @@ function tracking(blockType) {
 		    if (blockType == 1) {
 			centerText.setText('We will now move to the point-to-point reaching task.');
 		    } else if (blockType == 2) {
-			centerText.setText('We will now download data from the experiment onto your computer. The download process may take up to a minute.\n\nIf your browser asks if you want to open or save the data, please click Save.');
+			centerText.setText('We will now download data from the experiment onto your computer. The download process will take several minutes.\n\nIf your browser asks if you want to open or save the data, please click Save.');
 		    } else {
-			centerText.setText('Those were the three versions of tracking trials you will experience during this experiment. You will now try out the point-to-point reaching task.');
+			centerText.setText('Now you will now try out the point-to-point reaching task.');
 		    }
 		    centerText.setAutoDraw(true);
 		    displayTimer.reset();
@@ -832,7 +881,7 @@ function tracking(blockType) {
 
 	//------Transition out of tracking task------
 	case 7:
-	    if (displayTimer.getTime() > 2) {
+	    if (displayTimer.getTime() > 4) {
 		if (pressEnter.autoDraw === false) {
 		    pressEnter.setAutoDraw(true);
 		    keyboard.clearEvents();
@@ -842,7 +891,7 @@ function tracking(blockType) {
 		if (Object.keys(keys).length === 1) {
 		    pressEnter.setAutoDraw(false);
 		    if (blockType == 2) {
-			centerText.setText('Please wait. The download process will take several minutes.\n\nDo not navigate away from this webpage.');
+			centerText.setText('The download has started. Do not close or navigate away from this webpage. The experiment will transition to a new page once the download has completed.\n\nPlease wait for several minutes...');
 			displayTimer.reset();
 		    } else
 			centerText.setAutoDraw(false);
@@ -886,6 +935,7 @@ function p2p(blockType) {
 	case 1:
 	    // set target and cursor positions
 	    target.setPos([0, 0]);
+	    cursor.setPos([cX, cY]);
 
 	    let number;
 	    if (blockType)
@@ -1019,6 +1069,7 @@ function p2p(blockType) {
 		else
 		    psychoJS.experiment.addData('task','p2p (tutorial)');
 		psychoJS.experiment.addData('block',blockP2p);
+		psychoJS.experiment.addData('mirror',mirror);
 		psychoJS.experiment.addData('time',data[0].slice(0,idx+1));
 		psychoJS.experiment.addData('cursorX',data[1].slice(0,idx+1));
 		psychoJS.experiment.addData('cursorY',data[2].slice(0,idx+1));
@@ -1134,7 +1185,7 @@ function p2p(blockType) {
 		    else if (blockType == 3)
 			centerText.setText('We will now move to the tracking task. If needed, please take a short break.');
 		} else
-		    centerText.setText('We will now move to the real experiment. If you are confused about how to perform any of these tasks, please close out this experiment and contact the BLAM Lab with your questions.');
+		    centerText.setText('We will now move to the real experiment. If you are confused about how to perform any of these tasks, please close out this experiment and contact the BLAM Lab with your questions.\n\nWe will begin with the tracking task.');
 
 		centerText.setAutoDraw(true);
 		displayTimer.reset();
@@ -1144,7 +1195,7 @@ function p2p(blockType) {
 
 	//------Transition out of point-to-point task------
 	case 7:
-	    if (displayTimer.getTime() > 2) {
+	    if (displayTimer.getTime() > 4) {
 		if (pressEnter.autoDraw === false) {
 		    pressEnter.setAutoDraw(true);
 		    keyboard.clearEvents();
