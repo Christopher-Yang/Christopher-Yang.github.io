@@ -86,6 +86,14 @@ flowScheduler.add(tracking(2));
 flowScheduler.add(wait);
 flowScheduler.add(quitPsychoJS, 'Thank you for your patience, the data has finished downloading. You may now close the experiment.', true);
 
+// count the total number of blocks to perform
+const tasks = flowScheduler._taskList;
+let nBlocks = 0;
+for (let i = 0; i < tasks.length; i++) {
+    if (tasks[i].name=="")
+	nBlocks++;
+}
+
 // quit if user presses Cancel in dialog box:
 dialogCancelScheduler.add(quitPsychoJS, '', false);
 
@@ -137,13 +145,13 @@ let centerText;
 let pressEnter;
 let trialCounter;
 let fullScreenReminder;
+let blockCounter;
 let keyboard;
 let mouse;
 let moveOn;
 let heightLim;
 let widthLim;
 let targetRadius;
-const textHeight = -0.18;
 function experimentInit() {
     // Make mouse cursor invisible
     document.body.style.cursor='none';
@@ -261,7 +269,7 @@ function experimentInit() {
 	text: 'Stay in the target to make it move to a new location.',
 	alignHoriz: 'center',
 	units: 'norm',
-	pos: [0, 0.85],
+	pos: [0, -0.75],
 	height: 0.075,
 	wrapWidth: true,
 	color: new Color('white'),
@@ -295,7 +303,7 @@ function experimentInit() {
 	text: 'Press the "Enter" key to continue.',
 	alignHoriz: 'center',
 	units: 'height',
-	pos: [0, textHeight],
+	pos: [0, -0.26],
 	height: 0.7*cm2height,
 	wrapWidth: true,
 	color: new Color('white'),
@@ -304,6 +312,7 @@ function experimentInit() {
     trialCounter = new TextStim({
 	win: psychoJS.window,
 	name: 'trialCounter',
+	text: 'Trial 0/2',
 	alignHoriz: 'center',
 	units: 'norm',
 	pos: [0.83, 0.85],
@@ -326,6 +335,19 @@ function experimentInit() {
 	options: true
     });
     
+    blockCounter = new TextStim({
+	win: psychoJS.window,
+	name: 'blockCounter',
+	text: `Block 0/${nBlocks}`,
+	alignHoriz: 'center',
+	units: 'norm',
+	pos: [0, 0.85],
+	height: 0.075,
+	wrapWidth: true,
+	color: new Color('white'),
+	options: true
+    });
+
     keyboard = new Keyboard({
 	psychoJS: psychoJS
     });
@@ -364,8 +386,10 @@ function fullscreenTutorial() {
 	keys = keyboard.getKeys({keyList: ['return']});
 	if (Object.keys(keys).length === 1) {
 	    pressEnter.setAutoDraw(false);
-	    centerText.setText('You will be performing two tasks today: 1) a tracking task, and 2) a point-to-point reaching task. Before the real experiment starts, we will let you try both tasks right now.\n\nWe will start by trying the tracking task.');
+	    centerText.setText(`The experiment will be divided into ${nBlocks} blocks of trials, and in each block, you will perform one of two tasks: 1) a tracking task, and 2) a point-to-point reaching task. You can keep track of which block and trial of the experiment you are currently in at the top of the screen.\n\nBefore the real experiment starts, we will let you try out both tasks, starting with the tracking task.`);
 	    fullScreenReminder.setAutoDraw(true);
+	    trialCounter.setAutoDraw(true);
+	    blockCounter.setAutoDraw(true);
 	    displayTimer.reset();
 	    return Scheduler.Event.NEXT;
 	}
@@ -405,9 +429,13 @@ function taskTutorial() {
 
 
 function click() {
+    // allow participant to reenter fullscreen by pressing 'f'
+    let keys = keyboard.getKeys({keyList: ['f']});
+    if (Object.keys(keys).length === 1)
+	psychoJS.window.adjustScreenSize();
+
     if (mouse.getPressed()[0] == 1) {
 	centerText.setAutoDraw(false);
-	trialCounter.setAutoDraw(true);
 	displayTimer.reset();
 	return Scheduler.Event.NEXT;
     }
@@ -416,8 +444,6 @@ function click() {
     
 
 let trialType;
-// let messageType;
-// let messageStart;
 let nTrials;
 let tFile;
 let tX_freq;
@@ -448,6 +474,7 @@ let lastHit;
 let waitDisplay;
 let trialNumber;
 let blockTracking = 1;
+let totalBlockCounter = 1;
 let state = 1;
 function tracking(blockType) {
     return function () {
@@ -479,10 +506,7 @@ function tracking(blockType) {
 		trialType = [1, 2];
 	    nTrials = trialType.length;
 	    trialNumber = 1;
-
-	    // messageType = trialType.map((a) => a == 4 ? 3 : a);
-	    // messageStart = messageType.map((current, i, all) => (current != all[i-1]) ? 1 : 0);
-	    // messageStart[0] = 0;
+	    blockCounter.setText(`Block ${totalBlockCounter}/${nBlocks}`);
 
 	    let number;
 	    if (blockType)
@@ -659,29 +683,10 @@ function tracking(blockType) {
 	    waitDisplay = 0;
 	    // draw objects
 	    if (blockType) {
-		// if (trialNumber == 1) 
-		//     instructions.setText('Version 1: Random target movement.');
-		// else if (trialNumber == 2)
-		//     instructions.setText('Version 2: Random cursor movement.');
-		// else
-		//     instructions.setText('Version 3: Random target and cursor movement.');
-
 		instructions.setText('Click the target to begin the trial');
 		instructions.setAutoDraw(true);
 		waitDisplay = 2;
 	    } else {
-	      	// switch (trialNumber) {
-		// case 1:
-		//     instructions.setText('Version 1: The target (grey circle) will move randomly on the screen for ~45 seconds, and you must try to keep your cursor (white dot) inside the target for as long as you possibly can.\n\nThis task is designed to be very difficult so just try your best.\n\nClick the target to begin the first trial.');
-		//     break;
-
-		// case 2:
-		//     instructions.setText('Version 2: The target will remain still but your cursor will be moved around randomly. Try your best to counteract the random cursor movement and keep the cursor in the stationary target.\n\nClick the target to begin the next trial.');
-		//     break;
-
-		// case 3:
-		//     instructions.setText('Version 3: Both the cursor and the target will move randomly. Still try your best to keep the cursor inside the target.\n\nClick the target to begin the next trial.');
-		// }
 		if (trialNumber == 1)
 		    instructions.setText('In the tracking task, you will use a cursor (white dot) to track a moving target (grey circle) for ~45 seconds. During the trial, both the target and cursor will move randomly. Try your best to counteract the random cursor movement and keep your cursor inside the target for as long as possible.\n\nThis task is designed to be very difficult so just try your best. Click the target to try out the task.');
 		else
@@ -701,12 +706,6 @@ function tracking(blockType) {
 	case 3:
 	    cursor.setPos([cX, cY]);
 	    	    
-	    // if (displayTimer.getTime() > waitDisplay) {
-	    // 	if (target.autoDraw == false) {
-	    // 	    target.setAutoDraw(true);
-	    // 	    cursor.setAutoDraw(true);
-	    // 	}
-	    
 	    if (target.contains(cursor) && mouse.getPressed()[0] == 1) {
 		if (instructions.autoDraw == true)
 		    instructions.setAutoDraw(false);
@@ -822,11 +821,13 @@ function tracking(blockType) {
 		let idx2 = extraData[0].length;
 		while (idx2-- && !extraData[0][idx2]);
 
-		if (blockType)
+		if (blockType) {
 		    psychoJS.experiment.addData('task','tracking');
-		else
+		    psychoJS.experiment.addData('block',blockTracking);
+		} else {
 		    psychoJS.experiment.addData('task','tracking (tutorial)');
-		psychoJS.experiment.addData('block',blockTracking);
+		    psychoJS.experiment.addData('block',0);
+		}
 		psychoJS.experiment.addData('trialType',trialType[trialNumber-1]);
 		psychoJS.experiment.addData('mirror',mirror);
 		psychoJS.experiment.addData('time',data[0].slice(0,idx+1));
@@ -864,7 +865,11 @@ function tracking(blockType) {
 		
 		if (trialNumber == nTrials+1) {
 		    if (blockType == 1) {
-			centerText.setText('We will now move to the point-to-point reaching task.');
+			if (blockTracking == 2)
+			    centerText.setText('You will now do the point-to-point reaching task using the new cursor mapping you just experienced. This task is designed to be very difficult, but just try your best to reach towards each target in a straight line, as quickly and accurately as possible.'); 
+			else
+			    centerText.setText('We will now move to the point-to-point reaching task. Remember to reach towards each target in a straight line, as quickly and accurately as possible.');
+			    
 		    } else if (blockType == 2) {
 			centerText.setText('We will now download data from the experiment onto your computer. The download process will take several minutes.\n\nIf your browser asks if you want to open or save the data, please click Save.');
 		    } else {
@@ -896,6 +901,7 @@ function tracking(blockType) {
 		    } else
 			centerText.setAutoDraw(false);
 		    state = 1;
+		    totalBlockCounter++;
 		    if (blockType)
 			blockTracking++;
 		    return Scheduler.Event.NEXT;
@@ -942,6 +948,8 @@ function p2p(blockType) {
 		number = blockP2p;
 	    else
 		number = 0;
+
+	    blockCounter.setText(`Block ${totalBlockCounter}/${nBlocks}`);
 	    
 	    // get target positions
 	    tFile = [];
@@ -961,9 +969,9 @@ function p2p(blockType) {
 	    if (blockType)
 		instructions.setText('Click the target to begin the task.');
 	    else
-		instructions.setText('The target (grey circle) will appear at random locations on the screen. Use your cursor (white dot) to click on the target as quickly and accurately as possible.\n\nClick the target to begin the task.');
+		instructions.setText('The target (grey circle) will appear at random locations on the screen. When a new target appears, move your cursor (white dot) towards it in a straight line as quickly and accurately as possible and click on it. The target will then move to a new location.\n\nClick the target to begin the task.');
 	    instructions.setAutoDraw(true);
-		
+	    
 	    state = 2;
 	    return Scheduler.Event.FLIP_REPEAT;
 	    break;
@@ -1015,7 +1023,8 @@ function p2p(blockType) {
 	    cursor.setPos([cX, cY]);
 	    
 	    let distance = Math.sqrt(Math.pow(startX - cX, 2) + Math.pow(startY - cY, 2));
-	    
+
+	    // check to see whether cursor has left the target radius
 	    if (distance > targetRadius && begin == 0)
 		begin = 1;
 	    
@@ -1064,11 +1073,13 @@ function p2p(blockType) {
 		while (idx2-- && !extraData[0][idx2]);
 
 		// store data
-		if (blockType)
+		if (blockType) {
 		    psychoJS.experiment.addData('task','p2p');
-		else
+		    psychoJS.experiment.addData('block',blockP2p);
+		} else {
 		    psychoJS.experiment.addData('task','p2p (tutorial)');
-		psychoJS.experiment.addData('block',blockP2p);
+		    psychoJS.experiment.addData('block',0);
+		}
 		psychoJS.experiment.addData('mirror',mirror);
 		psychoJS.experiment.addData('time',data[0].slice(0,idx+1));
 		psychoJS.experiment.addData('cursorX',data[1].slice(0,idx+1));
@@ -1178,14 +1189,14 @@ function p2p(blockType) {
 		if (blockType) {
 		    if (blockType == 1) {
 			mirror = true;
-			centerText.setText('We will now move to the tracking task. However, for the rest of the experiment, we will change how your hand movements map into cursor movements.\n\nMoving your hand up and down will make the cursor move right and left, and moving your hand right and left will make the cursor will move up and down.\n\nStill try your best to do the tracking and point-to-point tasks as best as you can.');
-			pressEnter.setPos([0, -.26]);
+			centerText.setText('We will now move to the tracking task. However, for the rest of the experiment, we will change how your hand movements map into cursor movements.\n\nMoving your hand up and down will make the cursor move right and left, and moving your hand right and left will make the cursor will move up and down.\n\nThis will be very difficult, but just try your best to do the tracking task as best as you can.');
 		    } else if (blockType == 2)
 			centerText.setText('We will do the point-to-point reaching task again. If needed, please take a short break.');
 		    else if (blockType == 3)
 			centerText.setText('We will now move to the tracking task. If needed, please take a short break.');
-		} else
+		} else {
 		    centerText.setText('We will now move to the real experiment. If you are confused about how to perform any of these tasks, please close out this experiment and contact the BLAM Lab with your questions.\n\nWe will begin with the tracking task.');
+		}
 
 		centerText.setAutoDraw(true);
 		displayTimer.reset();
@@ -1205,13 +1216,11 @@ function p2p(blockType) {
 		if (Object.keys(keys).length === 1) {
 		    pressEnter.setAutoDraw(false);
 		    centerText.setAutoDraw(false);
-
-		    if (pressEnter.pos[1] != textHeight)
-			pressEnter.setPos([0, textHeight]);
 			
 		    target.setFillColor(new Color([0.2, 0.2, 0.2]));
 		    trialNumber = 1;
 		    state = 1;
+		    totalBlockCounter++;
 		    if (blockType)
 			blockP2p++;
 		    return Scheduler.Event.NEXT;
