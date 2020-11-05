@@ -411,7 +411,7 @@ function taskTutorial() {
 
 	keys = keyboard.getKeys({keyList: ['return']});
 	if (Object.keys(keys).length === 1) {
-	    centerText.setText('Click the left mouse button to make your cursor appear.');
+	    centerText.setText('Please use a computer mouse to complete this experiment. If your mouse is not currently connected, please connect it now. If you do not have a computer mouse, you will not be able to complete the experiment.\n\nClick the left mouse button to make your cursor appear.');
 
 	    canvas.onclick = function() {
 		canvas.requestPointerLock();
