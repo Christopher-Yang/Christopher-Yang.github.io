@@ -103,10 +103,8 @@ psychoJS.start({
 });
 
 //------------DETAILS OF TRIAL STRUCTURE------------//
-let frameRate;
 function updateInfo() {
     const browser = detectBrowser(); // detect browser
-    frameRate = psychoJS.window.getActualFrameRate(); // get frame rate of monitor
 
     expInfo['date'] = MonotonicClock.getDateStr();  // add a simple timestamp
     expInfo['expName'] = expName;
@@ -114,7 +112,6 @@ function updateInfo() {
     expInfo['OS'] = window.navigator.platform;
     expInfo['browser'] = browser;
     expInfo['browserInfo'] = window.navigator.userAgent;
-    expInfo['frameRate'] = frameRate;
     util.addInfoFromUrl(expInfo); // add info from URL
     return Scheduler.Event.NEXT;
 }
@@ -128,8 +125,6 @@ let ampsX = new Array;
 let ampsY = new Array;
 let phasesX = new Array;
 let phasesY = new Array;
-let time;
-let Nstep;
 let height2cm;
 let cm2height;
 let pix2height;
@@ -218,9 +213,6 @@ function experimentInit() {
     cm2height = 1 / heightCm; // use this to convert centimeters to height units
     pix2height = 1 / window.screen.height;
     expInfo['cmConvert'] = cm2height;
-
-    time = [...Array(frameRate*(trialLength)+20).keys()].map(a => a/frameRate);
-    Nstep = time.length;
 
     // Create display objects
     cursor = new Polygon ({
@@ -369,6 +361,8 @@ function experimentInit() {
     return Scheduler.Event.NEXT;
 }
 
+
+let start;
 function fullscreenTutorial() {
     // allow participant to reenter fullscreen by pressing 'f'
     let keys = keyboard.getKeys({keyList: ['f']});
@@ -376,7 +370,7 @@ function fullscreenTutorial() {
 	psychoJS.window.adjustScreenSize();
 	moveOn = true;
     }
-        
+
     if (moveOn) {
 	if (pressEnter.autoDraw === false) {
 	    pressEnter.setAutoDraw(true);
@@ -386,24 +380,41 @@ function fullscreenTutorial() {
 	keys = keyboard.getKeys({keyList: ['return']});
 	if (Object.keys(keys).length === 1) {
 	    pressEnter.setAutoDraw(false);
-	    centerText.setText(`The experiment will be divided into ${nBlocks} blocks of trials, and in each block, you will perform one of two tasks: 1) a tracking task, and 2) a point-to-point reaching task. You can keep track of which block and trial of the experiment you are currently in at the top of the screen.\n\nBefore the real experiment starts, we will let you try out both tasks, starting with the tracking task.`);
+	    pressEnter.setPos([0, -0.34]);
+	    centerText.setText(`This experiment will be divided into ${nBlocks} blocks of trials, and in each block, you will perform one of two tasks: 1) a tracking task, and 2) a point-to-point reaching task. You can keep track of which block and trial of the experiment you are currently in at the top of the screen.\n\nThe experiment will take about 60-90 mins to complete. There will be sections during the experiment where you can take a short break if you so desire. Please do not take breaks unless the experiment notifies you that you can do so.\n\nBefore the real experiment starts, we will let you try out both tasks, starting with the tracking task.`);
 	    fullScreenReminder.setAutoDraw(true);
 	    trialCounter.setAutoDraw(true);
 	    blockCounter.setAutoDraw(true);
 	    displayTimer.reset();
+	    trialClock.reset();
+	    start = trialClock.getTime();
 	    return Scheduler.Event.NEXT;
 	}
     }
     return Scheduler.Event.FLIP_REPEAT;
 }
 
+
+let frameRate;
+let time;
+let Nstep;
+let timeCount = 0;
+let timeBetweenFrames = new Array(144*10); // 144 Hz * 10 seconds
 function taskTutorial() {
     // allow participant to reenter fullscreen by pressing 'f'
     let keys = keyboard.getKeys({keyList: ['f']});
     if (Object.keys(keys).length === 1)
 	psychoJS.window.adjustScreenSize();
+
+    // calculate time between frames
+    if (timeCount < timeBetweenFrames.length) {
+	let end = trialClock.getTime();
+	timeBetweenFrames[timeCount] = end - start;
+	start = end;
+	timeCount++;
+    }	
     
-    if (displayTimer.getTime() > 4) {
+    if (displayTimer.getTime() > 10) {
 	if (pressEnter.autoDraw === false) {
 	    pressEnter.setAutoDraw(true);
 	    keyboard.clearEvents();
@@ -411,6 +422,16 @@ function taskTutorial() {
 
 	keys = keyboard.getKeys({keyList: ['return']});
 	if (Object.keys(keys).length === 1) {
+	    // calculate frame rate
+	    timeBetweenFrames = timeBetweenFrames.filter(x => x != null);
+	    let frameDur = timeBetweenFrames.reduce((a, b) => a + b) / timeBetweenFrames.length;
+	    frameRate = Math.round(1 / frameDur);
+	    expInfo['frameRate'] = frameRate;
+
+	    // when to draw frames
+	    time = [...Array(frameRate*(trialLength)+20).keys()].map(a => a/frameRate);
+	    Nstep = time.length;
+	    
 	    centerText.setText('Please use a computer mouse to complete this experiment. If your mouse is not currently connected, please connect it now. If you do not have a computer mouse, you will not be able to complete the experiment.\n\nClick the left mouse button to make your cursor appear.');
 
 	    canvas.onclick = function() {
@@ -420,6 +441,7 @@ function taskTutorial() {
 	    document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
 
 	    pressEnter.setAutoDraw(false);
+	    pressEnter.setPos([0, -0.26]);
 	    return Scheduler.Event.NEXT;
 	}
     }
