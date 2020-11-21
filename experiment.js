@@ -72,14 +72,11 @@ flowScheduler.add(tracking(1));
 flowScheduler.add(p2p(1));
 flowScheduler.add(tracking(1));
 flowScheduler.add(p2p(2));
-flowScheduler.add(p2p(2));
 flowScheduler.add(p2p(3));
 flowScheduler.add(tracking(1));
 flowScheduler.add(p2p(2));
-flowScheduler.add(p2p(2));
 flowScheduler.add(p2p(3));
 flowScheduler.add(tracking(1));
-flowScheduler.add(p2p(2));
 flowScheduler.add(p2p(2));
 flowScheduler.add(p2p(3));
 flowScheduler.add(tracking(2));
@@ -381,7 +378,7 @@ function fullscreenTutorial() {
 	if (Object.keys(keys).length === 1) {
 	    pressEnter.setAutoDraw(false);
 	    pressEnter.setPos([0, -0.34]);
-	    centerText.setText(`This experiment will be divided into ${nBlocks} blocks of trials, and in each block, you will perform one of two tasks: 1) a tracking task, and 2) a point-to-point reaching task. You can keep track of which block and trial of the experiment you are currently in at the top of the screen.\n\nThe experiment will take about 60-90 mins to complete. There will be sections during the experiment where you can take a short break if you so desire. Please do not take breaks unless the experiment notifies you that you can do so.\n\nBefore the real experiment starts, we will let you try out both tasks, starting with the tracking task.`);
+	    centerText.setText(`This experiment will be divided into ${nBlocks} blocks of trials, and in each block, you will perform one of two tasks: 1) a tracking task, and 2) a point-to-point reaching task. You can keep track of which block and trial of the experiment you are currently in at the top of the screen.\n\nThe experiment will take about 60 mins to complete. There will be sections during the experiment where you can take a short break if you so desire. Please do not take breaks unless the experiment notifies you that you can do so.\n\nBefore the real experiment starts, we will let you try out both tasks, starting with the tracking task.`);
 	    fullScreenReminder.setAutoDraw(true);
 	    trialCounter.setAutoDraw(true);
 	    blockCounter.setAutoDraw(true);
@@ -523,9 +520,11 @@ function tracking(blockType) {
 	    // 3: Target + cursor sines, set 1
 	    // 4: Target + cursor sines, set 2
 	    if (blockType)
-		trialType = [1, 2, 1, 2, 3, 4, 3, 4];
+		// trialType = [1, 2, 1, 2, 3, 4, 3, 4];
+		trialType = [5, 5, 5, 5];
 	    else
-		trialType = [1, 2];
+		// trialType = [1, 2];
+		trialType = [5, 5];
 	    nTrials = trialType.length;
 	    trialNumber = 1;
 	    blockCounter.setText(`Block ${totalBlockCounter}/${nBlocks}`);
@@ -710,7 +709,8 @@ function tracking(blockType) {
 		waitDisplay = 2;
 	    } else {
 		if (trialNumber == 1)
-		    instructions.setText('In the tracking task, you will use a cursor (white dot) to track a moving target (grey circle) for ~45 seconds. During the trial, both the target and cursor will move randomly. Try your best to counteract the random cursor movement and keep your cursor inside the target for as long as possible.\n\nThis task is designed to be very difficult so just try your best. Click the target to try out the task.');
+		    // instructions.setText('In the tracking task, you will use a cursor (white dot) to track a moving target (grey circle) for ~45 seconds. During the trial, both the target and cursor will move randomly. Try your best to counteract the random cursor movement and keep your cursor inside the target for as long as possible.\n\nThis task is designed to be very difficult so just try your best. Click the target to try out the task.');
+		    instructions.setText('In the tracking task, you will use a cursor (white dot) to track a moving target (grey circle) for ~45 seconds. During the trial, the target will move randomly on the screen. Try your best to keep your cursor inside the target for as long as possible.\n\nThis task is designed to be very difficult so just try your best. Click the target to try out the task.');
 		else
 		    instructions.setText('Try the tracking task one more time. Click the target to begin the trial.');
 		instructions.setAutoDraw(true);
