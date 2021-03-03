@@ -33,7 +33,7 @@ let canvas = psychoJS.window._renderer.view;
 canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock;
 
 // set length of trial in seconds (set desired time + 6 secs)
-const trialLength = 46;
+const trialLength = 10;
 
 // store info about the experiment session:
 let expName = 'Tracking';  // from the Builder filename that created this script
@@ -41,7 +41,7 @@ let expInfo = {'participant': '', 'size': ''};
 
 // schedule the experiment:
 psychoJS.schedule(psychoJS.gui.DlgFromDict({
-    text: "Welcome to the experiment. Press 'Ok' when you are ready to begin.",
+    text: "Welcome to the experiment. Please make sure you are using either Chrome or Firefox to run the experiment. If you are not currently using one of these browsers, copy this webpage's URL and paste it into a new browser. Press 'Ok' when you are ready to begin.",
     dictionary: expInfo,
     title: expName
 }));
@@ -64,24 +64,30 @@ psychoJS.scheduleCondition(function() { return (psychoJS.gui.dialogComponent.but
 flowScheduler.add(updateInfo);
 flowScheduler.add(experimentInit);
 flowScheduler.add(fullscreenTutorial);
-flowScheduler.add(taskTutorial);
 flowScheduler.add(click);
+flowScheduler.add(taskTutorial);
 flowScheduler.add(tracking(0));
 flowScheduler.add(p2p(0));
-flowScheduler.add(tracking(1));
-flowScheduler.add(p2p(1));
-flowScheduler.add(tracking(1));
-flowScheduler.add(p2p(2));
-flowScheduler.add(p2p(3));
-flowScheduler.add(tracking(1));
-flowScheduler.add(p2p(2));
-flowScheduler.add(p2p(3));
-flowScheduler.add(tracking(1));
-flowScheduler.add(p2p(2));
-flowScheduler.add(p2p(3));
-flowScheduler.add(tracking(2));
+// flowScheduler.add(tracking(1));
+// flowScheduler.add(p2p(1));
+// flowScheduler.add(tracking(1));
+// flowScheduler.add(p2p(2));
+// flowScheduler.add(p2p(2));
+// flowScheduler.add(p2p(2));
+// flowScheduler.add(p2p(3));
+// flowScheduler.add(tracking(1));
+// flowScheduler.add(p2p(2));
+// flowScheduler.add(p2p(2));
+// flowScheduler.add(p2p(2));
+// flowScheduler.add(p2p(3));
+// flowScheduler.add(tracking(1));
+// flowScheduler.add(p2p(2));
+// flowScheduler.add(p2p(2));
+// flowScheduler.add(p2p(2));
+// flowScheduler.add(p2p(3));
+// flowScheduler.add(tracking(2));
 flowScheduler.add(wait);
-flowScheduler.add(quitPsychoJS, 'Thank you for your patience, the data has finished downloading. You may now close the experiment.', true);
+flowScheduler.add(quitPsychoJS, 'Thank you for your patience, the data has finished downloading. You may now close this webpage.', true);
 
 // count the total number of blocks to perform
 const tasks = flowScheduler._taskList;
@@ -116,12 +122,6 @@ function updateInfo() {
 
 let x = 0.2;
 let y = 0;
-let freqsX = new Array;
-let freqsY = new Array;
-let ampsX = new Array;
-let ampsY = new Array;
-let phasesX = new Array;
-let phasesY = new Array;
 let height2cm;
 let cm2height;
 let pix2height;
@@ -152,23 +152,6 @@ function experimentInit() {
     trialClock = new Clock(); // keeps time during each trial
     stationaryTimer = new Clock(); // keeps time for interval between p2p reaches
     displayTimer = new Clock();
-
-    // Set parameters for sum of sines
-    const f = [0.1, 0.15, 0.25, 0.35, 0.55, 0.65, 0.85, 0.95, 1.15, 1.45, 1.55, 1.85];
-    let a = f.map(f => 1/f);
-    const threshold = a[5];
-    a = a.map(a => a >= threshold ? threshold : a);
-    const p = [-2.2973572091724623, 2.1829905511425176, 1.6573448103607546 ,-1.538946698747247, -0.02868219371247127, -0.3173569996006864, 0.9524867388833398, 1.8141023176943092, -2.551855477031973, -2.9634802056111047, 2.1096743676129526, -0.4224369710975715];
-
-    // Divide x and y sinusoid parameters into different subarrays
-    for (let i=0; i<12; i=i+2) {
-    	freqsX.push(f[i]);
-    	freqsY.push(f[i+1]);
-    	ampsX.push(a[i]);
-    	ampsY.push(a[i+1]);
-    	phasesX.push(p[i]);
-    	phasesY.push(p[i+1]);
-    }
 
     // Calculate screen aspect ratio
     let aRatioX;
@@ -217,13 +200,10 @@ function experimentInit() {
 	name: 'cursor',
 	units : 'height',
 	pos: [0, 0],
-	lineWidth: 0.5,
-	lineColor: new Color('white'),
+	lineWidth: 0,
 	fillColor: new Color('white'),
 	edges: 32,
 	radius: 0.1*cm2height,
-	interpolate: true,
-	autoLog: false,
     });
 
     target = new Polygon ({
@@ -236,8 +216,6 @@ function experimentInit() {
 	fillColor: new Color([0.2, 0.2, 0.2]),
 	edges: 64,
 	radius: 0.5*cm2height,
-	interpolate: true,
-	autoLog: false,
     });
     targetRadius = target.radius;
 
@@ -245,9 +223,9 @@ function experimentInit() {
 	win: psychoJS.window,
 	name: 'goodJob',
 	alignHoriz: 'center',
-	units: 'height',
+	units: 'norm',
 	pos: [0, 0],
-	height: 0.7*cm2height,
+	height: 0.06,
 	wrapWidth: true,
 	color: new Color('white'),
     });
@@ -266,11 +244,11 @@ function experimentInit() {
 
     instructions = new TextStim({
 	win: psychoJS.window,
-	name: 'cursorTargetInstructions',
+	name: 'instructions',
 	alignHoriz: 'center',
-	units: 'height',
-	pos: [0, -4*cm2height],
-	height: 0.7*cm2height,
+	units: 'norm',
+	pos: [0, -0.4],
+	height: 0.06,
 	wrapWidth: true,
 	color: new Color('white'),
     });
@@ -279,9 +257,9 @@ function experimentInit() {
 	win: psychoJS.window,
 	name: 'centerText',
 	alignHoriz: 'center',
-	units: 'height',
+	units: 'norm',
 	pos: [0, 0],
-	height: 0.7*cm2height,
+	height: 0.06,
 	wrapWidth: true,
 	color: new Color('white'),
     });
@@ -291,9 +269,9 @@ function experimentInit() {
 	name: 'p2p_tracking',
 	text: 'Press the "Enter" key to continue.',
 	alignHoriz: 'center',
-	units: 'height',
-	pos: [0, -0.26],
-	height: 0.7*cm2height,
+	units: 'norm',
+	pos: [0, -0.55],
+	height: 0.06,
 	wrapWidth: true,
 	color: new Color('white'),
     });
@@ -366,83 +344,35 @@ function fullscreenTutorial() {
     if (Object.keys(keys).length === 1) {
 	psychoJS.window.adjustScreenSize();
 	moveOn = true;
+
+	if (pressEnter.autoDraw === false) {
+	    pressEnter.setAutoDraw(true);
+	    keyboard.clearEvents();
+	}
+
     }
 
+    // if 'f' is pressed, allow participant to move on to next block
     if (moveOn) {
-	if (pressEnter.autoDraw === false) {
-	    pressEnter.setAutoDraw(true);
-	    keyboard.clearEvents();
-	}
-	
+
+	// move on if 'return' is pressed
 	keys = keyboard.getKeys({keyList: ['return']});
 	if (Object.keys(keys).length === 1) {
-	    pressEnter.setAutoDraw(false);
-	    pressEnter.setPos([0, -0.34]);
-	    centerText.setText(`This experiment will be divided into ${nBlocks} blocks of trials, and in each block, you will perform one of two tasks: 1) a tracking task, and 2) a point-to-point reaching task. You can keep track of which block and trial of the experiment you are currently in at the top of the screen.\n\nThe experiment will take about 60 mins to complete. There will be sections during the experiment where you can take a short break if you so desire. Please do not take breaks unless the experiment notifies you that you can do so.\n\nBefore the real experiment starts, we will let you try out both tasks, starting with the tracking task.`);
-	    fullScreenReminder.setAutoDraw(true);
-	    trialCounter.setAutoDraw(true);
-	    blockCounter.setAutoDraw(true);
-	    displayTimer.reset();
-	    trialClock.reset();
-	    start = trialClock.getTime();
-	    return Scheduler.Event.NEXT;
-	}
-    }
-    return Scheduler.Event.FLIP_REPEAT;
-}
 
-
-let frameRate;
-let time;
-let Nstep;
-let timeCount = 0;
-let timeBetweenFrames = new Array(144*10); // 144 Hz * 10 seconds
-function taskTutorial() {
-    // allow participant to reenter fullscreen by pressing 'f'
-    let keys = keyboard.getKeys({keyList: ['f']});
-    if (Object.keys(keys).length === 1)
-	psychoJS.window.adjustScreenSize();
-
-    // calculate time between frames
-    if (timeCount < timeBetweenFrames.length) {
-	let end = trialClock.getTime();
-	timeBetweenFrames[timeCount] = end - start;
-	start = end;
-	timeCount++;
-    }	
-    
-    if (displayTimer.getTime() > 10) {
-	if (pressEnter.autoDraw === false) {
-	    pressEnter.setAutoDraw(true);
-	    keyboard.clearEvents();
-	}
-
-	keys = keyboard.getKeys({keyList: ['return']});
-	if (Object.keys(keys).length === 1) {
-	    // calculate frame rate
-	    timeBetweenFrames = timeBetweenFrames.filter(x => x != null);
-	    let frameDur = timeBetweenFrames.reduce((a, b) => a + b) / timeBetweenFrames.length;
-	    frameRate = Math.round(1 / frameDur);
-	    expInfo['frameRate'] = frameRate;
-
-	    // when to draw frames
-	    time = [...Array(frameRate*(trialLength)+20).keys()].map(a => a/frameRate);
-	    Nstep = time.length;
-	    
-	    centerText.setText('Please use a computer mouse to complete this experiment. If your mouse is not currently connected, please connect it now. If you do not have a computer mouse, you will not be able to complete the experiment.\n\nClick the left mouse button to make your cursor appear.');
-
+	    // begin monitoring mouse position
 	    canvas.onclick = function() {
 		canvas.requestPointerLock();
 	    };
 	    document.addEventListener('pointerlockchange', lockChangeAlert, false);
 	    document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
 
+	    // change displayed objects
+	    centerText.setText('Please use a computer mouse to complete this experiment. If your mouse is not currently connected, please connect it now. If you do not have a computer mouse, you will not be able to complete the experiment.\n\nPlease make sure you have a clear space to move your mouse about 8-10 inches horizontally and vertically.\n\nClick the left mouse button to make your cursor appear.');
 	    pressEnter.setAutoDraw(false);
-	    pressEnter.setPos([0, -0.26]);
+	    fullScreenReminder.setAutoDraw(true);
 	    return Scheduler.Event.NEXT;
 	}
     }
-
     return Scheduler.Event.FLIP_REPEAT;
 }
 
@@ -453,11 +383,74 @@ function click() {
     if (Object.keys(keys).length === 1)
 	psychoJS.window.adjustScreenSize();
 
+    // move onto next block if LMB is pressed
     if (mouse.getPressed()[0] == 1) {
-	centerText.setAutoDraw(false);
+	centerText.setText(`This experiment will be divided into ${nBlocks} blocks of trials, and in each block, you will perform one of two tasks: 1) a tracking task, and 2) a point-to-point reaching task. You can keep track of which block and trial of the experiment you are currently in at the top of the screen.\n\nThe experiment will take about 60-90 mins to complete. There will be sections during the experiment where you can take a short break if you wish to. Please do not take breaks unless the experiment notifies you that you can do so.\n\nBefore the real experiment starts, we will let you try out both tasks, starting with the tracking task.`);
+
+	// change display objects
+	trialCounter.setAutoDraw(true);
+	blockCounter.setAutoDraw(true);
+	cursor.setAutoDraw(true);
 	displayTimer.reset();
+	trialClock.reset();
+	start = trialClock.getTime();
 	return Scheduler.Event.NEXT;
     }
+    return Scheduler.Event.FLIP_REPEAT;
+}
+
+
+let frameRate;
+let time;
+let Nstep;
+let timeCount = 0;
+let timeBetweenFrames = new Array(240*20); // 240 Hz * 20 seconds
+function taskTutorial() {
+    // allow participant to reenter fullscreen by pressing 'f'
+    let keys = keyboard.getKeys({keyList: ['f']});
+    if (Object.keys(keys).length === 1)
+	psychoJS.window.adjustScreenSize();
+
+    // draw cursor
+    cursor.setPos([x, y]);
+    
+    // calculate time between frames
+    if (timeCount < timeBetweenFrames.length) {
+	let end = trialClock.getTime();
+	timeBetweenFrames[timeCount] = end - start;
+	start = end;
+	timeCount++;
+    }
+
+    //  allow participant to move on if 10 secs have passed
+    if (displayTimer.getTime() > 10) {
+	if (pressEnter.autoDraw === false) {
+	    pressEnter.setAutoDraw(true);
+	    keyboard.clearEvents();
+	}
+
+	// move on if return key is pressed
+	keys = keyboard.getKeys({keyList: ['return']});
+	if (Object.keys(keys).length === 1) {
+
+	    // calculate frame rate
+	    timeBetweenFrames = timeBetweenFrames.filter(x => x != null);
+	    let frameDur = timeBetweenFrames.reduce((a, b) => a + b) / timeBetweenFrames.length;
+	    frameRate = Math.round(1 / frameDur);
+	    expInfo['frameRate'] = frameRate;
+
+	    // when to draw frames
+	    time = [...Array(frameRate*(trialLength)+20).keys()].map(a => a/frameRate);
+	    Nstep = time.length;
+
+	    // change display objects
+	    cursor.setAutoDraw(false); // must turn off cursor to ensure cursor is drawn over target
+	    centerText.setAutoDraw(false);
+	    pressEnter.setAutoDraw(false);
+	    return Scheduler.Event.NEXT;
+	}
+    }
+
     return Scheduler.Event.FLIP_REPEAT;
 }
     
@@ -477,6 +470,9 @@ let cX_amp;
 let cY_amp;
 let cX_phase;
 let cY_phase;
+let freqs = new Array;
+let amps = new Array;
+let phases = new Array;
 let data;
 let extraData;
 let extraCount;
@@ -490,9 +486,8 @@ let mirror = false;
 let t;
 let currentHit;
 let lastHit;
-let waitDisplay;
 let trialNumber;
-let blockTracking = 1;
+let blockTracking = 0;
 let totalBlockCounter = 1;
 let state = 1;
 function tracking(blockType) {
@@ -502,6 +497,7 @@ function tracking(blockType) {
 	if (Object.keys(keys).length === 1)
 	    psychoJS.window.adjustScreenSize();
 
+	// mirror cursor position based on current block
 	if (mirror) {
 	    cX = y;
 	    cY = x;
@@ -513,145 +509,142 @@ function tracking(blockType) {
 	//------Main loop for tracking task------
 	switch (state) {
 
+        //------Import sinusoid parameters------
 	case 1:
-	    // Set types of tracking trials
-	    // 1: Target sines only
-	    // 2: Cursor sines only
-	    // 3: Target + cursor sines, set 1
-	    // 4: Target + cursor sines, set 2
-	    if (blockType)
-		// trialType = [1, 2, 1, 2, 3, 4, 3, 4];
-		trialType = [5, 5, 5, 5];
-	    else
-		// trialType = [1, 2];
-		trialType = [5, 5];
-	    nTrials = trialType.length;
-	    trialNumber = 1;
-	    blockCounter.setText(`Block ${totalBlockCounter}/${nBlocks}`);
 
-	    let number;
-	    if (blockType)
-		number = blockTracking;
-	    else
-		number = 0;
+	    // set types of tracking trials; numbers correspond to different mixtures of freqs, amps, and phases
+	    if (blockType) // trial type order for main experiment
+		// trialType = [1, 2, 1, 2, 3, 4, 3, 4];
+		// trialType = [5, 5, 5, 5];
+		trialType = [1, 2, 3, 4, 1, 2, 3, 4];
+	    else // trial type order for tutorial
+		// trialType = [1, 2];
+		// trialType = [5, 5];
+		trialType = [1, 2];
 	    
+	    nTrials = trialType.length; // total number of trials in the block
+	    trialNumber = 1; // initialize current trial number
+
+	    // import .csv file contianing sinusoid parameters
 	    tFile = [];
 	    $.ajax({
-		url: `../tFiles/tracking${number}.csv`,
+		url: `../tFiles/tracking${blockTracking}.csv`,
 		dataType: 'text',
 		async: false,
 	    }).done(parseCSV);
 
-	    freqsX = [];
-	    freqsY = [];
-	    ampsX = [];
-	    ampsY = [];
-	    phasesX = [];
-	    phasesY = [];
-	    for (let i=0; i<tFile.length; i+=2) {
-		freqsX.push(tFile[i].freq);
-		ampsX.push(tFile[i].amp);
-		phasesX.push(tFile[i].phase);
-		freqsY.push(tFile[i+1].freq);
-		ampsY.push(tFile[i+1].amp);
-		phasesY.push(tFile[i+1].phase);	    
+	    // store sinusoid parameters in variables
+	    freqs = [];
+	    amps = [];
+	    phases = [];
+	    for (let i=0; i<tFile.length; i++) {
+		freqs.push(tFile[i].freq);
+		amps.push(tFile[i].amp);
+		phases.push(tFile[i].phase);
 	    }
+	    
 	    state = 2;
+	    blockCounter.setText(`Block ${totalBlockCounter}/${nBlocks}`); // update display of current block
 	    return Scheduler.Event.FLIP_REPEAT;
 	    break;
 	    
         //------Prepare to start trial------
 	case 2:
+
+	    // preallocate variables for storing data
 	    data = makeArray(9, Nstep+frameRate*2);
 	    extraData = makeArray(9, frameRate*2);
-	    extraCount = 0;
-	    lastHit = false;
+	    extraCount = 0; // index for storing data into extraData
 
-	    // reset target position to center of screen
-	    target.setPos([0, 0]);
-
-	    // set cursor position
+	    // set target and cursor position
+	    target.setPos([0, 0]); // set target to center of screen
 	    cursor.setPos([cX, cY]);
 	    
-	    // preallocate cursor sum of sinusoids
-	    tPosX = new Array(Nstep);
+	    // preallocate variables for sum of sines perturbations
+	    tPosX = new Array(Nstep); // perturbation to target position
 	    tPosY = new Array(Nstep);
-	    cPosX = new Array(Nstep);
+	    cPosX = new Array(Nstep); // perturbation to cursor position
 	    cPosY = new Array(Nstep);
 
 	    // set sinusoid parameters based on trial type
 	    switch(trialType[trialNumber-1]) {
-	    case 1: // target and cursor sinusoids (set 1)
-		tX_freq = freqsX.filter((a, index) => index%2 == 0);
-		tY_freq = freqsX.filter((a, index) => index%2 == 1);
-		tX_amp = ampsX.filter((a, index) => index%2 == 0);
-		tY_amp = ampsX.filter((a, index) => index%2 == 1);
-		tX_phase = phasesX.filter((a, index) => index%2 == 0);
-		tY_phase = phasesX.filter((a, index) => index%2 == 1);
 
-		cX_freq = freqsY.filter((a, index) => index%2 == 0);
-		cY_freq = freqsY.filter((a, index) => index%2 == 1);
-		cX_amp = ampsY.filter((a, index) => index%2 == 0);
-		cY_amp = ampsY.filter((a, index) => index%2 == 1);
-		cX_phase = phasesY.filter((a, index) => index%2 == 0);
-		cY_phase = phasesY.filter((a, index) => index%2 == 1);
-		break;
-		
-	    case 2: // target and cursor sinusoids (set 2)
-		tX_freq = freqsY.filter((a, index) => index%2 == 0);
-		tY_freq = freqsY.filter((a, index) => index%2 == 1);
-		tX_amp = ampsY.filter((a, index) => index%2 == 0);
-		tY_amp = ampsY.filter((a, index) => index%2 == 1);
-		tX_phase = phasesY.filter((a, index) => index%2 == 0);
-		tY_phase = phasesY.filter((a, index) => index%2 == 1);
+	    // target and cursor sinusoids (set 1)
+	    case 1: 
+		tX_freq = freqs.filter((a, index) => index%4 == 0);
+		tY_freq = freqs.filter((a, index) => index%4 == 2);
+		tX_amp = amps.filter((a, index) => index%4 == 0);
+		tY_amp = amps.filter((a, index) => index%4 == 2);
+		tX_phase = phases.filter((a, index) => index%4 == 0);
+		tY_phase = phases.filter((a, index) => index%4 == 2);
 
-		cX_freq = freqsX.filter((a, index) => index%2 == 0);
-		cY_freq = freqsX.filter((a, index) => index%2 == 1);
-		cX_amp = ampsX.filter((a, index) => index%2 == 0);
-		cY_amp = ampsX.filter((a, index) => index%2 == 1);
-		cX_phase = phasesX.filter((a, index) => index%2 == 0);
-		cY_phase = phasesX.filter((a, index) => index%2 == 1);
+		cX_freq = freqs.filter((a, index) => index%4 == 1);
+		cY_freq = freqs.filter((a, index) => index%4 == 3);
+		cX_amp = amps.filter((a, index) => index%4 == 1);
+		cY_amp = amps.filter((a, index) => index%4 == 3);
+		cX_phase = phases.filter((a, index) => index%4 == 1);
+		cY_phase = phases.filter((a, index) => index%4 == 3);
 		break;
 
-	    case 3: // target and cursor sinusoids (set 1)
-		tX_freq = freqsX.filter((a, index) => index%2 == 1);
-		tY_freq = freqsX.filter((a, index) => index%2 == 0);
-		tX_amp = ampsX.filter((a, index) => index%2 == 1);
-		tY_amp = ampsX.filter((a, index) => index%2 == 0);
-		tX_phase = phasesX.filter((a, index) => index%2 == 0);
-		tY_phase = phasesX.filter((a, index) => index%2 == 1);
+	    // target and cursor sinusoids (set 2)
+	    case 2:
+		tX_freq = freqs.filter((a, index) => index%4 == 1);
+		tY_freq = freqs.filter((a, index) => index%4 == 3);
+		tX_amp = amps.filter((a, index) => index%4 == 1);
+		tY_amp = amps.filter((a, index) => index%4 == 3);
+		tX_phase = phases.filter((a, index) => index%4 == 1);
+		tY_phase = phases.filter((a, index) => index%4 == 3);
 
-		cX_freq = freqsY.filter((a, index) => index%2 == 1);
-		cY_freq = freqsY.filter((a, index) => index%2 == 0);
-		cX_amp = ampsY.filter((a, index) => index%2 == 1);
-		cY_amp = ampsY.filter((a, index) => index%2 == 0);
-		cX_phase = phasesY.filter((a, index) => index%2 == 0);
-		cY_phase = phasesY.filter((a, index) => index%2 == 1);
-		break;
-		
-	    case 4: // target and cursor sinusoids (set 2)
-		tX_freq = freqsY.filter((a, index) => index%2 == 1);
-		tY_freq = freqsY.filter((a, index) => index%2 == 0);
-		tX_amp = ampsY.filter((a, index) => index%2 == 1);
-		tY_amp = ampsY.filter((a, index) => index%2 == 0);
-		tX_phase = phasesY.filter((a, index) => index%2 == 0);
-		tY_phase = phasesY.filter((a, index) => index%2 == 1);
-
-		cX_freq = freqsX.filter((a, index) => index%2 == 1);
-		cY_freq = freqsX.filter((a, index) => index%2 == 0);
-		cX_amp = ampsX.filter((a, index) => index%2 == 1);
-		cY_amp = ampsX.filter((a, index) => index%2 == 0);
-		cX_phase = phasesX.filter((a, index) => index%2 == 0);
-		cY_phase = phasesX.filter((a, index) => index%2 == 1);
+		cX_freq = freqs.filter((a, index) => index%4 == 2);
+		cY_freq = freqs.filter((a, index) => index%4 == 0);
+		cX_amp = amps.filter((a, index) => index%4 == 2);
+		cY_amp = amps.filter((a, index) => index%4 == 0);
+		cX_phase = phases.filter((a, index) => index%4 == 2);
+		cY_phase = phases.filter((a, index) => index%4 == 0);
 		break;
 
-	    case 5: // target sinusoids only
-		tX_freq = freqsX;
-		tY_freq = freqsY;
-		tX_amp = ampsX;
-		tY_amp = ampsY;
-		tX_phase = phasesX;
-		tY_phase = phasesY;
+	    // target and cursor sinusoids (set 3)
+	    case 3: 
+		tX_freq = freqs.filter((a, index) => index%4 == 2);
+		tY_freq = freqs.filter((a, index) => index%4 == 0);
+		tX_amp = amps.filter((a, index) => index%4 == 2);
+		tY_amp = amps.filter((a, index) => index%4 == 0);
+		tX_phase = phases.filter((a, index) => index%4 == 0);
+		tY_phase = phases.filter((a, index) => index%4 == 2);
+
+		cX_freq = freqs.filter((a, index) => index%4 == 3);
+		cY_freq = freqs.filter((a, index) => index%4 == 1);
+		cX_amp = amps.filter((a, index) => index%4 == 3);
+		cY_amp = amps.filter((a, index) => index%4 == 1);
+		cX_phase = phases.filter((a, index) => index%4 == 1); // change mod operation to change phases for the frequencies
+		cY_phase = phases.filter((a, index) => index%4 == 3); // if phases aren't changed, case 3 will be mirror reversal of case 1
+		break;
+
+	    // target and cursor sinusoids (set 4)
+	    case 4:
+		tX_freq = freqs.filter((a, index) => index%4 == 3);
+		tY_freq = freqs.filter((a, index) => index%4 == 1);
+		tX_amp = amps.filter((a, index) => index%4 == 3);
+		tY_amp = amps.filter((a, index) => index%4 == 1);
+		tX_phase = phases.filter((a, index) => index%4 == 1);
+		tY_phase = phases.filter((a, index) => index%4 == 3);
+
+		cX_freq = freqs.filter((a, index) => index%4 == 0);
+		cY_freq = freqs.filter((a, index) => index%4 == 2);
+		cX_amp = amps.filter((a, index) => index%4 == 0);
+		cY_amp = amps.filter((a, index) => index%4 == 2);
+		cX_phase = phases.filter((a, index) => index%4 == 2); // if phases aren't changed, case 4 will be mirror reversal of case 2
+		cY_phase = phases.filter((a, index) => index%4 == 0);
+		break;
+
+	    // target sinusoids only
+	    case 5:
+		tX_freq = freqs.filter((a, index) => index%2 == 0);
+		tY_freq = freqs.filter((a, index) => index%2 == 1);
+		tX_amp = amps.filter((a, index) => index%2 == 0);
+		tY_amp = amps.filter((a, index) => index%2 == 1);
+		tX_phase = phases.filter((a, index) => index%2 == 0);
+		tY_phase = phases.filter((a, index) => index%2 == 1);
 
 		cX_freq = new Array(6).fill(0);
 		cY_freq = new Array(6).fill(0);
@@ -661,7 +654,8 @@ function tracking(blockType) {
 		cY_phase = new Array(6).fill(0);
 		break;
 
-	    case 6: // cursor sinusoids only
+	    // cursor sinusoids only
+	    case 6:
 		tX_freq = new Array(6).fill(0);
 		tY_freq = new Array(6).fill(0);
 		tX_amp = new Array(6).fill(0);
@@ -669,12 +663,12 @@ function tracking(blockType) {
 		tX_phase = new Array(6).fill(0);
 		tY_phase = new Array(6).fill(0);
 
-		cX_freq = freqsX;
-		cY_freq = freqsY;
-		cX_amp = ampsX;
-		cY_amp = ampsY;
-		cX_phase = phasesX;
-		cY_phase = phasesY;
+		cX_freq = freqs.filter((a, index) => index%2 == 0);
+		cY_freq = freqs.filter((a, index) => index%2 == 1);
+		cX_amp = amps.filter((a, index) => index%2 == 0);
+		cY_amp = amps.filter((a, index) => index%2 == 1);
+		cX_phase = phases.filter((a, index) => index%2 == 0);
+		cY_phase = phases.filter((a, index) => index%2 == 1);
 	    }
 
 	    // loop through all time points to build 2D sum-of-sines
@@ -701,38 +695,48 @@ function tracking(blockType) {
 		tPosY[j] = scale * cm2height * tY_all.reduce((a, b) => a + b);
 	    }
 
-	    waitDisplay = 0;
-	    // draw objects
-	    if (blockType) {
+	    // tracking instructions for main experiment
+	    if (blockType) { 
 		instructions.setText('Click the target to begin the trial');
-		instructions.setAutoDraw(true);
-		waitDisplay = 2;
-	    } else {
+	    }
+	    
+	    // tracking instructions for tutorial block
+	    else {
+
+		// first tracking tutorial
 		if (trialNumber == 1)
-		    // instructions.setText('In the tracking task, you will use a cursor (white dot) to track a moving target (grey circle) for ~45 seconds. During the trial, both the target and cursor will move randomly. Try your best to counteract the random cursor movement and keep your cursor inside the target for as long as possible.\n\nThis task is designed to be very difficult so just try your best. Click the target to try out the task.');
-		    instructions.setText('In the tracking task, you will use a cursor (white dot) to track a moving target (grey circle) for ~45 seconds. During the trial, the target will move randomly on the screen. Try your best to keep your cursor inside the target for as long as possible.\n\nThis task is designed to be very difficult so just try your best. Click the target to try out the task.');
+		    instructions.setText('In the tracking task, you will use a cursor (white dot) to track a moving target (grey circle) for ~45 seconds. During the trial, both the target and cursor will move randomly. Try your best to counteract the random cursor movement and keep your cursor inside the target for as long as possible.\n\nThis task is designed to be very difficult so just do the best you can. Click the target to try out the task.');
+		    // instructions.setText('In the tracking task, you will use a cursor (white dot) to track a moving target (grey circle) for ~45 seconds. During the trial, the target will move randomly on the screen. Try your best to keep your cursor inside the target for as long as possible.\n\nThis task is designed to be very difficult so just try your best. Click the target to try out the task.');
+
+		// second tracking tutorial
 		else
 		    instructions.setText('Try the tracking task one more time. Click the target to begin the trial.');
-		instructions.setAutoDraw(true);
 	    }
 
+	    // draw objects
 	    trialCounter.setText(`Trial ${trialNumber}/${nTrials}`);
+	    instructions.setAutoDraw(true);
 	    target.setAutoDraw(true);
 	    cursor.setAutoDraw(true);
 	    state = 3;
-	    // displayTimer.reset();
+	    lastHit = false; // keeps track of history of cursor being inside target
 	    return Scheduler.Event.FLIP_REPEAT;
 	    break;
 
 	//------Wait for participant to click in the target to start trial------
 	case 3:
+	    
+	    // set cursor position
 	    cursor.setPos([cX, cY]);
-	    	    
+
+	    // start trial if participant clicks target
 	    if (target.contains(cursor) && mouse.getPressed()[0] == 1) {
 		if (instructions.autoDraw == true)
 		    instructions.setAutoDraw(false);
-		trialClock.reset();
+		
+		trialClock.reset(); // reset clock for tracking how long the trials has lasted
 
+		// store data at time of trial initiation
 		data[0][0] = Math.round(trialClock.getTime() * 100000) / 100000;
 		data[1][0] = Math.round(cX * height2cm * 100000) / 100000;
 		data[2][0] = Math.round(cY * height2cm * 100000) / 100000;
@@ -744,7 +748,6 @@ function tracking(blockType) {
 		data[8][0] = Math.round(cPosY[0] * height2cm * 100000) / 100000;
 
 		state = 4;
-	    // }
 	    }	    
 	    return Scheduler.Event.FLIP_REPEAT;
 	    break;
@@ -760,10 +763,8 @@ function tracking(blockType) {
 	    t = trialClock.getTime();
 	    let index = Math.round(t*frameRate);
 
-	    // set cursor position
+	    // set cursor and target positions
 	    cursor.setPos([cX + cPosX[index], cY + cPosY[index]]);
-
-	    // set target position
 	    target.setPos([tPosX[index], tPosY[index]]);
 
 	    // change target color if the cursor is inside the target
@@ -791,8 +792,8 @@ function tracking(blockType) {
 		extraData[0][extraCount] = Math.round(t * 100000) / 100000;
 		extraData[1][extraCount] = Math.round(cX * height2cm * 100000) / 100000;
 		extraData[2][extraCount] = Math.round(cY * height2cm * 100000) / 100000;
-		extraData[3][extraCount] = Math.round(cX * height2cm * 100000) / 100000;
-		extraData[4][extraCount] = Math.round(cY * height2cm * 100000) / 100000;
+		extraData[3][extraCount] = Math.round(x * height2cm * 100000) / 100000;
+		extraData[4][extraCount] = Math.round(y * height2cm * 100000) / 100000;
 		extraData[5][extraCount] = Math.round(tPosX[index] * height2cm * 100000) / 100000;
 		extraData[6][extraCount] = Math.round(tPosY[index] * height2cm * 100000) / 100000;
 		extraData[7][extraCount] = Math.round(cPosX[index] * height2cm * 100000) / 100000;
@@ -819,11 +820,14 @@ function tracking(blockType) {
 
         //------Tell the participant good job------
 	case 5:
+
+	    // display good job message for 1 second
 	    if (displayTimer.getTime() > 0.5 && goodJob.autoDraw === false) {
 		goodJob.setText('Trial complete, good job!');
 		goodJob.setAutoDraw(true);
 	    }
-	    
+
+	    // move on to next block after 1.5 seconds
 	    if (displayTimer.getTime() > 1.5) {
 		goodJob.setAutoDraw(false);
 		displayTimer.reset();
@@ -843,6 +847,7 @@ function tracking(blockType) {
 		let idx2 = extraData[0].length;
 		while (idx2-- && !extraData[0][idx2]);
 
+		// store data in .csv
 		if (blockType) {
 		    psychoJS.experiment.addData('task','tracking');
 		    psychoJS.experiment.addData('block',blockTracking);
@@ -883,18 +888,29 @@ function tracking(blockType) {
 		psychoJS.experiment.addData('cX_phase',cX_phase);
 		psychoJS.experiment.addData('cY_phase',cY_phase);
 		psychoJS.experiment.nextEntry();
-		trialNumber++;
-		
+
+		trialNumber++; // increment trial number
+
+		// decide message for transitioning out of tracking task
 		if (trialNumber == nTrials+1) {
 		    if (blockType == 1) {
+
+			// transition to first point-to-point after introducing new mapping
 			if (blockTracking == 2)
-			    centerText.setText('You will now do the point-to-point reaching task using the new cursor mapping you just experienced. This task is designed to be very difficult, but just try your best to reach towards each target in a straight line, as quickly and accurately as possible.'); 
+			    centerText.setText('You will now do the point-to-point reaching task using the new cursor mapping you just experienced. This task is designed to be very difficult, but just try your best to reach towards each target in a straight line, as quickly and accurately as possible.');
+
+			// transition to point-to-point in other blocks
 			else
 			    centerText.setText('We will now move to the point-to-point reaching task. Remember to reach towards each target in a straight line, as quickly and accurately as possible.');
-			    
-		    } else if (blockType == 2) {
+		    }
+
+		    // transition to end of experiment
+		    else if (blockType == 2) {
 			centerText.setText('We will now download data from the experiment onto your computer. The download process will take several minutes.\n\nIf your browser asks if you want to open or save the data, please click Save.');
-		    } else {
+		    }
+
+		    // transition to point-to-point during tutorial blocks
+		    else {
 			centerText.setText('Now you will now try out the point-to-point reaching task.');
 		    }
 		    centerText.setAutoDraw(true);
@@ -914,6 +930,7 @@ function tracking(blockType) {
 		    keyboard.clearEvents();
 		}
 
+		// move to next block if 'return' was pressed
 		keys = keyboard.getKeys({keyList: ['return']});
 		if (Object.keys(keys).length === 1) {
 		    pressEnter.setAutoDraw(false);
@@ -924,8 +941,7 @@ function tracking(blockType) {
 			centerText.setAutoDraw(false);
 		    state = 1;
 		    totalBlockCounter++;
-		    if (blockType)
-			blockTracking++;
+		    blockTracking++;
 		    return Scheduler.Event.NEXT;
 		}
 	    }
@@ -938,7 +954,7 @@ function tracking(blockType) {
 let lastPos;
 let lastTime;
 let save;
-let blockP2p = 1;
+let blockP2p = 0;
 let begin;
 let startX;
 let startY;
@@ -964,19 +980,11 @@ function p2p(blockType) {
 	    // set target and cursor positions
 	    target.setPos([0, 0]);
 	    cursor.setPos([cX, cY]);
-
-	    let number;
-	    if (blockType)
-		number = blockP2p;
-	    else
-		number = 0;
-
-	    blockCounter.setText(`Block ${totalBlockCounter}/${nBlocks}`);
 	    
 	    // get target positions
 	    tFile = [];
 	    $.ajax({
-		url: `../tFiles/p2p${number}.csv`,
+		url: `../tFiles/p2p${blockP2p}.csv`,
 		dataType: 'text',
 		async: false,
 	    }).done(parseCSV);
@@ -988,6 +996,7 @@ function p2p(blockType) {
 	    // draw objects
 	    target.setAutoDraw(true);
 	    cursor.setAutoDraw(true);
+	    blockCounter.setText(`Block ${totalBlockCounter}/${nBlocks}`);
 	    if (blockType)
 		instructions.setText('Click the target to begin the task.');
 	    else
@@ -1025,6 +1034,7 @@ function p2p(blockType) {
 		state = 3;
 		trialClock.reset();
 
+		// store data at time of trial initiation
 		data[0][0] = Math.round(trialClock.getTime() * 100000) / 100000;
 		data[1][0] = Math.round(cX * height2cm * 100000) / 100000;
 		data[2][0] = Math.round(cY * height2cm * 100000) / 100000;
@@ -1191,11 +1201,14 @@ function p2p(blockType) {
 
         //------Tell the participant good job------
 	case 5:
+
+	    // display good job for 1 second
 	    if (displayTimer.getTime() > 0.5 && goodJob.autoDraw === false) {
 		goodJob.setText('Block complete, good job!');
 		goodJob.setAutoDraw(true);
 	    }
-	    
+
+	    // move to next block after 1.5 seconds
 	    if (displayTimer.getTime() > 1.5) {
 		goodJob.setAutoDraw(false);
 		displayTimer.reset();
@@ -1207,16 +1220,30 @@ function p2p(blockType) {
 
 	//------Intertrial interval------
 	case 6:
+
+	    // change display message based on current block
 	    if (displayTimer.getTime() > 1) {
+
+		// messages for main experiment
 		if (blockType) {
+
+		    // explanation for new mapping
 		    if (blockType == 1) {
 			mirror = true;
 			centerText.setText('We will now move to the tracking task. However, for the rest of the experiment, we will change how your hand movements map into cursor movements.\n\nMoving your hand up and down will make the cursor move right and left, and moving your hand right and left will make the cursor will move up and down.\n\nThis will be very difficult, but just try your best to do the tracking task as best as you can.');
-		    } else if (blockType == 2)
+		    }
+
+		    // message for another block of point-to-point
+		    else if (blockType == 2)
 			centerText.setText('We will do the point-to-point reaching task again. If needed, please take a short break.');
+
+		    // message for transitioning to tracking
 		    else if (blockType == 3)
 			centerText.setText('We will now move to the tracking task. If needed, please take a short break.');
-		} else {
+		}
+
+		// message to transition out of tutorial
+		else {
 		    centerText.setText('We will now move to the real experiment. If you are confused about how to perform any of these tasks, please close out this experiment and contact the BLAM Lab with your questions.\n\nWe will begin with the tracking task.');
 		}
 
@@ -1233,7 +1260,8 @@ function p2p(blockType) {
 		    pressEnter.setAutoDraw(true);
 		    keyboard.clearEvents();
 		}
-		
+
+		// move to next block if 'return' is pressed
 		keys = keyboard.getKeys({keyList: ['return']});
 		if (Object.keys(keys).length === 1) {
 		    pressEnter.setAutoDraw(false);
@@ -1243,8 +1271,7 @@ function p2p(blockType) {
 		    trialNumber = 1;
 		    state = 1;
 		    totalBlockCounter++;
-		    if (blockType)
-			blockP2p++;
+		    blockP2p++;
 		    return Scheduler.Event.NEXT;
 		}
 	    }
@@ -1366,26 +1393,27 @@ function lockChangeAlert() {
     }
 }
 
+const gain = 0.15;
 function updatePosition(e) {
-    x += e.movementX*pix2height;
-    y -= e.movementY*pix2height;
+    x += gain * e.movementX * pix2height;
+    y -= gain * e.movementY * pix2height;
 
     let xLim;
     let yLim;
     if (mirror) {
-	xLim = heightLim;
-	yLim = widthLim;
+    	xLim = heightLim;
+    	yLim = widthLim;
     } else {
-	xLim = widthLim;
-	yLim = heightLim;
+    	xLim = widthLim;
+    	yLim = heightLim;
     }
     
     if (x > xLim)
-	x = xLim;
+    	x = xLim;
     if (x < -xLim)
-	x = -xLim;
+    	x = -xLim;
     if (y > yLim)
-	y = yLim;
+    	y = yLim;
     if (y < -yLim)
-	y = -yLim;
+    	y = -yLim;
 }
