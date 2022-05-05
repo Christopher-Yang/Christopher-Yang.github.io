@@ -41,7 +41,7 @@ let expInfo = {'participant': '', 'size': ''};
 
 // schedule the experiment:
 psychoJS.schedule(psychoJS.gui.DlgFromDict({
-    text: "Welcome to the experiment. Please make sure you are using either Chrome or Firefox to run the experiment. If you are not currently using one of these browsers, copy this webpage's URL and paste it into a new browser. Press 'Ok' when you are ready to begin.",
+    text: "Welcome to the experiment. Please make sure you are using either Chrome or Firefox to run the experiment. Please enter a random number for your participant number and the diagonal length of your computer monitor (in inches). Press 'Ok' when you are ready to begin.",
     dictionary: expInfo,
     title: expName
 }));
